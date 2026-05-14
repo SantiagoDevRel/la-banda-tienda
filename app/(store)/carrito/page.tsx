@@ -24,16 +24,14 @@ export default function CartPage() {
       />
 
       {!ready ? (
-        <div style={{ flex: 1, background: "var(--bg)" }} />
+        <div style={{ flex: 1 }} />
       ) : items.length === 0 ? (
         <EmptyCart />
       ) : (
         <>
           {/* Items */}
-          <div
-            className="store-body"
-            style={{ background: "var(--bg)", padding: "8px 16px" }}
-          >
+          <div className="store-body">
+            <div className="store-sheet" style={{ padding: "8px 16px" }}>
             {items.map((it, idx) => (
               <div
                 key={`${it.productId}-${it.size ?? ""}`}
@@ -145,6 +143,7 @@ export default function CartPage() {
                 </div>
               </div>
             ))}
+            </div>
           </div>
 
           {/* Totals + CTA */}
@@ -216,46 +215,49 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function EmptyCart() {
   return (
-    <div
-      className="store-body"
-      style={{
-        background: "var(--bg)",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "0 40px",
-        textAlign: "center",
-        gap: 16,
-      }}
-    >
+    <div className="store-body">
       <div
+        className="store-sheet"
         style={{
-          width: 96,
-          height: 96,
-          borderRadius: "50%",
-          background: "var(--surface-alt)",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
+          padding: "0 40px",
+          textAlign: "center",
+          gap: 16,
         }}
       >
-        <Icon name="cart" size={42} color="var(--ink-3)" stroke={1.3} />
+        <div
+          style={{
+            width: 96,
+            height: 96,
+            borderRadius: "50%",
+            background: "var(--surface-alt)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Icon name="cart" size={42} color="var(--ink-3)" stroke={1.3} />
+        </div>
+        <div>
+          <h2 style={{ fontSize: 20, marginBottom: 6 }}>
+            Tu carrito está vacío
+          </h2>
+          <p style={{ fontSize: 14, color: "var(--ink-2)", lineHeight: 1.5 }}>
+            Cuando agregues productos, los vas a ver acá. Mirá la colección y
+            armá tu pedido.
+          </p>
+        </div>
+        <Link
+          href="/"
+          className="lds-btn lds-btn-primary lds-btn-lg"
+          style={{ marginTop: 4 }}
+        >
+          Ver catálogo
+        </Link>
       </div>
-      <div>
-        <h2 style={{ fontSize: 20, marginBottom: 6 }}>
-          Tu carrito está vacío
-        </h2>
-        <p style={{ fontSize: 14, color: "var(--ink-2)", lineHeight: 1.5 }}>
-          Cuando agregues productos, los vas a ver acá. Mirá la colección y
-          armá tu pedido.
-        </p>
-      </div>
-      <Link
-        href="/"
-        className="lds-btn lds-btn-primary lds-btn-lg"
-        style={{ marginTop: 4 }}
-      >
-        Ver catálogo
-      </Link>
     </div>
   );
 }

@@ -486,11 +486,26 @@ a {
   text-shadow: 0 1px 24px rgba(0, 0, 0, 0.5);
 }
 
-/* Scrollable body inside a screen */
+/* Scrollable body inside a screen — transparent so the video shows through */
 .store-body {
   flex: 1;
   display: flex;
   flex-direction: column;
+}
+
+/* Frosted content sheet — floats over the video backdrop with margins
+   around it (video visible at the edges) and a soft blur the footage
+   shows through. Keeps content readable without hiding the backdrop. */
+.store-sheet {
+  flex: 1;
+  margin: 12px 12px 14px;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
 }
 
 /* Sticky bottom action bar (detail / checkout / nequi) */

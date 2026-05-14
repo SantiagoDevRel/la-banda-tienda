@@ -115,7 +115,7 @@ export default function NequiPage() {
     return (
       <div className="store-screen">
         <StoreHeader title="Pago con Nequi" back hideCart />
-        <div style={{ flex: 1, background: "var(--bg)" }} />
+        <div style={{ flex: 1 }} />
       </div>
     );
   }
@@ -123,8 +123,8 @@ export default function NequiPage() {
   return (
     <div className="store-screen">
       <StoreHeader title="Pago con Nequi" back hideCart />
-      <div className="store-body" style={{ background: "var(--bg)" }}>
-        <div style={{ flex: 1, padding: "16px 18px 18px" }}>
+      <div className="store-body">
+        <div className="store-sheet" style={{ padding: "16px 18px 18px" }}>
           <div
             style={{
               fontSize: 11,

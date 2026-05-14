@@ -28,7 +28,7 @@ export default function ConfirmPage() {
     return (
       <div className="store-screen">
         <StoreHeader />
-        <div style={{ flex: 1, background: "var(--bg)" }} />
+        <div style={{ flex: 1 }} />
       </div>
     );
   }
@@ -37,10 +37,12 @@ export default function ConfirmPage() {
     return (
       <div className="store-screen">
         <StoreHeader />
+        <div className="store-body">
         <div
-          className="store-body"
+          className="store-sheet"
           style={{
-            background: "var(--bg)",
+            display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
             textAlign: "center",
@@ -74,6 +76,7 @@ export default function ConfirmPage() {
             Ir al catálogo
           </Link>
         </div>
+        </div>
       </div>
     );
   }
@@ -81,7 +84,8 @@ export default function ConfirmPage() {
   return (
     <div className="store-screen">
       <StoreHeader />
-      <div className="store-body" style={{ background: "var(--bg)" }}>
+      <div className="store-body">
+        <div className="store-sheet">
         <div style={{ padding: "28px 18px 22px", textAlign: "center" }}>
           <div
             style={{
@@ -255,6 +259,7 @@ export default function ConfirmPage() {
           >
             Seguir comprando
           </Link>
+        </div>
         </div>
       </div>
     </div>

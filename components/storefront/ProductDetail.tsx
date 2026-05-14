@@ -31,9 +31,12 @@ export function ProductDetail({ product: p }: { product: Product }) {
 
   return (
     <>
-      <div className="store-body" style={{ background: "var(--bg)" }}>
-        {/* Image */}
-        <div style={{ background: "var(--surface-alt)", padding: "10px 14px 8px" }}>
+      <div className="store-body">
+        <div className="store-sheet">
+          {/* Image */}
+          <div
+            style={{ background: "var(--surface-alt)", padding: "10px 14px 8px" }}
+          >
           <div style={{ width: "82%", margin: "0 auto" }}>
             <ProductImage product={p} />
           </div>
@@ -143,6 +146,7 @@ export function ProductDetail({ product: p }: { product: Product }) {
               min={1}
               max={out ? 1 : p.stock}
             />
+          </div>
           </div>
         </div>
       </div>

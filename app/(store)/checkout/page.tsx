@@ -76,7 +76,7 @@ export default function CheckoutPage() {
     return (
       <div className="store-screen">
         <StoreHeader title="Tus datos" back />
-        <div style={{ flex: 1, background: "var(--bg)" }} />
+        <div style={{ flex: 1 }} />
       </div>
     );
   }
@@ -84,13 +84,8 @@ export default function CheckoutPage() {
   return (
     <div className="store-screen">
       <StoreHeader title="Tus datos" back />
-      <form
-        onSubmit={submit}
-        className="store-body"
-        style={{ background: "var(--bg)" }}
-        noValidate
-      >
-        <div style={{ flex: 1, padding: "18px 16px 16px" }}>
+      <form onSubmit={submit} className="store-body" noValidate>
+        <div className="store-sheet" style={{ padding: "18px 16px 16px" }}>
           {/* Order summary */}
           <div
             style={{
