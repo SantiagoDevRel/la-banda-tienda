@@ -1,0 +1,278 @@
+/* Tienda Los del Sur — design tokens + base resets */
+
+:root {
+  /* Surfaces */
+  --bg: #fafaf7;
+  --surface: #ffffff;
+  --surface-alt: #f5f4f0;
+
+  /* Text */
+  --ink: #18181b;
+  --ink-2: #52525b;
+  --ink-3: #a1a1aa;
+  --ink-4: #d4d4d8;
+
+  /* Lines */
+  --line: #e8e6e1;
+  --line-2: #f1efea;
+
+  /* Accent — verde sobrio */
+  --accent: #1E7A3D;
+  --accent-deep: #155A2B;
+  --accent-tint: #E8F2EC;
+  --accent-ink: #0F4423;
+
+  /* Status badges */
+  --status-pending-bg: #FEF3C7;
+  --status-pending-ink: #92400E;
+  --status-pending-dot: #D97706;
+
+  --status-done-bg: #E8F2EC;
+  --status-done-ink: #0F4423;
+  --status-done-dot: #1E7A3D;
+
+  --status-shipped-bg: #DBEAFE;
+  --status-shipped-ink: #1E40AF;
+  --status-shipped-dot: #2563EB;
+
+  --status-cancel-bg: #F4F4F5;
+  --status-cancel-ink: #52525B;
+  --status-cancel-dot: #71717A;
+
+  /* Type */
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Radii */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-full: 999px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(20, 20, 20, .04);
+  --shadow-sm: 0 1px 2px rgba(20, 20, 20, .04), 0 1px 3px rgba(20, 20, 20, .06);
+  --shadow-md: 0 4px 12px rgba(20, 20, 20, .06), 0 1px 2px rgba(20, 20, 20, .04);
+  --shadow-lg: 0 10px 30px rgba(20, 20, 20, .08), 0 2px 6px rgba(20, 20, 20, .04);
+}
+
+* { box-sizing: border-box; }
+
+/* Screen root reset (used inside each artboard) */
+.lds-screen {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--bg);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+}
+
+.lds-screen h1, .lds-screen h2, .lds-screen h3, .lds-screen h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--ink);
+}
+
+.lds-screen p { margin: 0; }
+
+/* Buttons */
+.lds-btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  border-radius: var(--r-md);
+  padding: 12px 18px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background .12s, border-color .12s, color .12s;
+  line-height: 1;
+}
+.lds-btn-primary {
+  background: var(--accent);
+  color: white;
+}
+.lds-btn-primary:hover { background: var(--accent-deep); }
+.lds-btn-secondary {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.lds-btn-secondary:hover { border-color: var(--ink-3); }
+.lds-btn-ghost {
+  background: transparent;
+  color: var(--ink-2);
+}
+.lds-btn-ghost:hover { background: var(--surface-alt); color: var(--ink); }
+.lds-btn-danger {
+  background: var(--surface);
+  border-color: var(--line);
+  color: #B91C1C;
+}
+.lds-btn-block { width: 100%; }
+.lds-btn-lg { padding: 16px 22px; font-size: 16px; border-radius: var(--r-lg); }
+.lds-btn-sm { padding: 8px 12px; font-size: 13px; }
+
+/* Inputs */
+.lds-input,
+.lds-textarea,
+.lds-select {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  width: 100%;
+  transition: border-color .12s, box-shadow .12s;
+  letter-spacing: -0.005em;
+}
+.lds-input:focus,
+.lds-textarea:focus,
+.lds-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.lds-input::placeholder { color: var(--ink-3); }
+.lds-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+  letter-spacing: -0.005em;
+}
+
+/* Badges */
+.lds-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: var(--r-full);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+.lds-badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.lds-badge-stock-ok    { background: var(--accent-tint); color: var(--accent-ink); }
+.lds-badge-stock-low   { background: var(--status-pending-bg); color: var(--status-pending-ink); }
+.lds-badge-stock-out   { background: var(--status-cancel-bg); color: var(--status-cancel-ink); }
+
+.lds-badge-pending  { background: var(--status-pending-bg);  color: var(--status-pending-ink); }
+.lds-badge-pending  .dot { background: var(--status-pending-dot); }
+.lds-badge-done     { background: var(--status-done-bg);     color: var(--status-done-ink); }
+.lds-badge-done     .dot { background: var(--status-done-dot); }
+.lds-badge-shipped  { background: var(--status-shipped-bg);  color: var(--status-shipped-ink); }
+.lds-badge-shipped  .dot { background: var(--status-shipped-dot); }
+.lds-badge-cancel   { background: var(--status-cancel-bg);   color: var(--status-cancel-ink); }
+.lds-badge-cancel   .dot { background: var(--status-cancel-dot); }
+
+/* Product placeholder graphics */
+.lds-prodfig {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--surface-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.lds-prodfig svg { width: 60%; height: 60%; }
+
+/* Tables (admin) */
+.lds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.lds-table th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--ink-2);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-alt);
+}
+.lds-table td {
+  padding: 14px;
+  border-bottom: 1px solid var(--line-2);
+  color: var(--ink);
+  vertical-align: middle;
+}
+.lds-table tr:last-child td { border-bottom: 0; }
+.lds-table tr:hover td { background: var(--surface-alt); }
+
+/* Misc helpers */
+.lds-divider { height: 1px; background: var(--line-2); border: 0; margin: 0; }
+.lds-num { font-variant-numeric: tabular-nums; }
+.lds-link { color: var(--accent); font-weight: 500; text-decoration: none; cursor: pointer; }
+.lds-link:hover { text-decoration: underline; }
+
+/* Scrollbars hidden inside screens (decision: design surface) */
+.lds-screen, .lds-screen * { scrollbar-width: none; }
+.lds-screen::-webkit-scrollbar, .lds-screen *::-webkit-scrollbar { display: none; }
+
+/* Phone frame */
+.lds-phone {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  position: relative;
+}
+.lds-statusbar {
+  height: 44px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px 0 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.lds-statusbar-right { display: flex; align-items: center; gap: 6px; }
+.lds-homebar {
+  height: 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.lds-homebar-pill {
+  width: 130px;
+  height: 5px;
+  background: var(--ink);
+  border-radius: 3px;
+}
