@@ -1,4 +1,4 @@
-// La banda — logo, generic icon set, product glyph placeholders.
+// La Banda — logo, generic icon set, product glyph placeholders.
 // Ported from the Claude Design handoff (_design-ref/project/components.jsx).
 // Pure presentational — safe to render in server or client components.
 
@@ -20,7 +20,7 @@ export function Logo({
     <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
       <Image
         src="/main_logo_la_banda.webp"
-        alt="La banda"
+        alt="La Banda"
         width={img}
         height={img}
         priority
@@ -36,7 +36,7 @@ export function Logo({
           lineHeight: 1,
         }}
       >
-        La banda
+        La Banda
       </span>
     </div>
   );

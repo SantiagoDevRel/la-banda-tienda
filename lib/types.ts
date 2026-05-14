@@ -1,4 +1,4 @@
-// Tienda La banda — shared types
+// Tienda La Banda — shared types
 
 export type GlyphKind =
   | "shirt"

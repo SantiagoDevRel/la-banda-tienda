@@ -1,8 +1,8 @@
 @AGENTS.md
 
-# Tienda La banda — notas del proyecto
+# Tienda La Banda — notas del proyecto
 
-Tienda de merch para La banda. Next.js 16 (App Router) + React 19 + TS.
+Tienda de merch para La Banda. Next.js 16 (App Router) + React 19 + TS.
 Frontend implementado desde un handoff de Claude Design; backend pendiente.
 
 ## Reglas del proyecto

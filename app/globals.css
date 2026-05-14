@@ -576,7 +576,7 @@ a {
 }
 .chip.is-active {
   background: #fff;
-  color: var(--ink);
+  color: #18181b; /* fixed dark — the chip bg is always white, even in dark theme */
   border-color: #fff;
 }
 

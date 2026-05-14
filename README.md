@@ -1,6 +1,6 @@
-# Tienda La banda
+# Tienda La Banda
 
-Tienda online sencilla de merch para **La banda**. Catálogo público con
+Tienda online sencilla de merch para **La Banda**. Catálogo público con
 pago offline por **Nequi** (transferí + subí el pantallazo) y un **panel de
 administración** para gestionar productos y pedidos.
 

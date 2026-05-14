@@ -17,9 +17,9 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Tienda La banda",
+  title: "Tienda La Banda",
   description:
-    "Tienda oficial de La banda — merch, camisetas y accesorios. Pago por Nequi.",
+    "Tienda oficial de La Banda — merch, camisetas y accesorios. Pago por Nequi.",
 };
 
 export const viewport: Viewport = {

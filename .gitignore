@@ -44,3 +44,5 @@ next-env.d.ts
 # The processed web clips + posters live in public/video/ and ARE committed.
 # Regenerate clips with scripts/process-videos.sh.
 /_source-videos/
+
+.vercel
