@@ -405,9 +405,9 @@ a {
   z-index: 2;
   background: linear-gradient(
     180deg,
-    rgba(8, 12, 9, 0.5) 0%,
-    rgba(8, 12, 9, 0.58) 45%,
-    rgba(8, 12, 9, 0.82) 100%
+    rgba(8, 12, 9, 0.4) 0%,
+    rgba(8, 12, 9, 0.48) 45%,
+    rgba(8, 12, 9, 0.72) 100%
   );
 }
 
@@ -428,13 +428,35 @@ a {
   }
 }
 
-/* Per-screen wrapper — transparent so the backdrop shows through */
+/* Per-screen wrapper — transparent so the backdrop shows through.
+   Re-scopes the design tokens to a DARK GLASS theme: cards/inputs/text
+   become translucent dark "bubbles" so the video reads through them.
+   (Admin uses .lds-screen and stays on the original light theme.) */
 .store-screen {
   position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+  color: var(--ink); /* light text inherits into all plain-text descendants */
+
+  --bg: transparent;
+  --surface: rgba(17, 21, 18, 0.55);
+  --surface-alt: rgba(255, 255, 255, 0.07);
+  --ink: #f3f5f2;
+  --ink-2: rgba(237, 240, 235, 0.76);
+  --ink-3: rgba(237, 240, 235, 0.56);
+  --ink-4: rgba(237, 240, 235, 0.32);
+  --line: rgba(255, 255, 255, 0.14);
+  --line-2: rgba(255, 255, 255, 0.09);
+  --accent-tint: rgba(46, 161, 92, 0.2);
+  --accent-ink: #86e1a5;
+  --glyph-stroke: rgba(223, 240, 228, 0.5);
+}
+
+/* Product glyph placeholders read as a light line on the dark bubbles */
+.store-screen .lds-glyph * {
+  stroke: var(--glyph-stroke);
 }
 
 /* Dark glass header */
@@ -493,28 +515,29 @@ a {
   flex-direction: column;
 }
 
-/* Frosted content sheet — floats over the video backdrop with margins
-   around it (video visible at the edges) and a soft blur the footage
-   shows through. Keeps content readable without hiding the backdrop. */
+/* Dark glass content sheet — a translucent dark "bubble" that floats over
+   the video backdrop with margins around it. The footage reads through it. */
 .store-sheet {
   flex: 1;
   margin: 12px 12px 14px;
-  background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: blur(16px) saturate(1.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(10, 13, 11, 0.4);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--r-xl);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
   overflow: hidden;
 }
 
-/* Sticky bottom action bar (detail / checkout / nequi) */
+/* Sticky bottom action bar (detail / checkout / nequi) — frosted dark glass */
 .store-cta {
   position: sticky;
   bottom: 0;
   z-index: 15;
   padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
   background: var(--surface);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
   border-top: 1px solid var(--line-2);
   flex-shrink: 0;
 }

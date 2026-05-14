@@ -342,7 +342,12 @@ export function ProductGlyph({
   style?: CSSProperties;
 }) {
   const svg = (
-    <svg viewBox="0 0 102 96" aria-hidden style={bare ? style : undefined}>
+    <svg
+      className="lds-glyph"
+      viewBox="0 0 102 96"
+      aria-hidden
+      style={bare ? style : undefined}
+    >
       {glyphContent(kind, color)}
     </svg>
   );
