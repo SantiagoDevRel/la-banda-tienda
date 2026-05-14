@@ -1,6 +1,6 @@
 "use client";
 
-// Tienda Los del Sur — client-side cart (context + localStorage).
+// Tienda La banda — client-side cart (context + localStorage).
 // Backend-free for now: the storefront flow is fully interactive but state
 // lives in the browser. Swaps to server/Supabase orders in the backend phase.
 

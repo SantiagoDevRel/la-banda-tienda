@@ -1,7 +1,8 @@
-// Tienda Los del Sur — logo, generic icon set, product glyph placeholders.
+// La banda — logo, generic icon set, product glyph placeholders.
 // Ported from the Claude Design handoff (_design-ref/project/components.jsx).
 // Pure presentational — safe to render in server or client components.
 
+import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import type { GlyphKind } from "@/lib/types";
 
@@ -13,28 +14,29 @@ export function Logo({
   size?: "sm" | "md" | "lg";
   tone?: "dark" | "light";
 }) {
-  const s = size === "sm" ? 16 : size === "lg" ? 22 : 18;
+  const img = size === "sm" ? 26 : size === "lg" ? 42 : 32;
+  const fs = size === "sm" ? 15 : size === "lg" ? 22 : 17;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path d="M3 21 V 6 L 12 3 L 21 6 V 21 Z" fill="var(--accent)" />
-        <path
-          d="M3 21 V 6 L 12 3 L 21 6 V 21 Z"
-          stroke="var(--accent-deep)"
-          strokeWidth="1"
-        />
-      </svg>
+    <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+      <Image
+        src="/main_logo_la_banda.webp"
+        alt="La banda"
+        width={img}
+        height={img}
+        priority
+        style={{ borderRadius: "50%", display: "block", objectFit: "cover" }}
+      />
       <span
         style={{
           fontFamily: "var(--font-display)",
           fontWeight: 700,
-          fontSize: s,
+          fontSize: fs,
           letterSpacing: "-0.02em",
           color: tone === "light" ? "#fff" : "var(--ink)",
           lineHeight: 1,
         }}
       >
-        Los del Sur
+        La banda
       </span>
     </div>
   );

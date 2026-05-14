@@ -1,4 +1,4 @@
-// Tienda Los del Sur — small presentational primitives (money, badges).
+// Tienda La banda — small presentational primitives (money, badges).
 // Ported from the Claude Design handoff. Pure — server-safe.
 
 import { formatCOP, STATUS_LABEL, STOCK_LABEL } from "@/lib/data";

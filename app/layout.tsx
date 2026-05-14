@@ -17,9 +17,9 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Tienda Los del Sur",
+  title: "Tienda La banda",
   description:
-    "Tienda oficial de Los del Sur — merch, camisetas y accesorios. Pago por Nequi.",
+    "Tienda oficial de La banda — merch, camisetas y accesorios. Pago por Nequi.",
 };
 
 export const viewport: Viewport = {

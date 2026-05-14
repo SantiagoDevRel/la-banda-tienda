@@ -1,6 +1,6 @@
-# Tienda Los del Sur
+# Tienda La banda
 
-Tienda online sencilla de merch para **Los del Sur**. Catálogo público con
+Tienda online sencilla de merch para **La banda**. Catálogo público con
 pago offline por **Nequi** (transferí + subí el pantallazo) y un **panel de
 administración** para gestionar productos y pedidos.
 

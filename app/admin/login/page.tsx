@@ -59,7 +59,7 @@ export default function LoginPage() {
           </p>
         </div>
         <div style={{ fontSize: 12, color: "var(--ink-3)" }}>
-          © 2026 Los del Sur ·{" "}
+          © 2026 La banda ·{" "}
           <span style={{ color: "var(--ink-2)", fontWeight: 500 }}>Ayuda</span>
         </div>
       </div>

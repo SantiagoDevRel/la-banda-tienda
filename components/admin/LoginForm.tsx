@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Icon } from "@/components/icons";
 
 export function LoginForm() {
-  const [email, setEmail] = useState("carlos@losdelsur.co");
-  const [password, setPassword] = useState("••••••••••");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
@@ -47,6 +47,7 @@ export function LoginForm() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          placeholder="jeison@labanda.com"
           aria-invalid={!!errors.email}
           autoComplete="email"
         />
@@ -63,6 +64,7 @@ export function LoginForm() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          placeholder="Tu contraseña"
           aria-invalid={!!errors.password}
           autoComplete="current-password"
         />

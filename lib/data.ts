@@ -1,4 +1,4 @@
-// Tienda Los del Sur — mock data (productos, pedidos, ajustes)
+// Tienda La banda — mock data (productos, pedidos, ajustes)
 // Esto se reemplaza por Supabase en la fase de backend. Por ahora alimenta la UI.
 
 import type { Order, Product, Settings, StockStatus } from "./types";
@@ -130,7 +130,7 @@ export const STATUS_LABEL: Record<Order["status"], string> = {
 
 // ── Ajustes de la tienda ──────────────────────────────────────
 export const SETTINGS: Settings = {
-  storeName: "Tienda Los del Sur",
+  storeName: "Tienda La banda",
   nequiNumber: "300 482 7791",
   nequiHolder: "Carlos Andrés Marín",
   whatsapp: "+57 300 482 7791",
