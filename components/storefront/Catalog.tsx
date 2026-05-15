@@ -1,8 +1,10 @@
 "use client";
 
 // Catalog grid + category chips. Filters the product list client-side.
+// Solo se muestran las categorías que tienen al menos un producto activo;
+// si queda una sola, también se oculta el chip "Todos".
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Icon } from "@/components/icons";
 import { CATEGORIES } from "@/lib/data";
 import { ProductCard } from "./ProductCard";
@@ -15,25 +17,43 @@ interface CatalogProps {
 export function Catalog({ products }: CatalogProps) {
   const [cat, setCat] = useState("Todos");
 
+  const visibleCategories = useMemo(() => {
+    const withProducts = CATEGORIES.filter(
+      (c) =>
+        c !== "Todos" &&
+        products.some((p) => p.tags.includes(c.toLowerCase())),
+    );
+    // Si solo una categoría tiene productos, no tiene sentido mostrar "Todos".
+    return withProducts.length > 1 ? ["Todos", ...withProducts] : withProducts;
+  }, [products]);
+
+  // Si la categoría seleccionada ya no está visible (la única se vació), caer
+  // a la primera disponible.
+  const effectiveCat = visibleCategories.includes(cat)
+    ? cat
+    : visibleCategories[0] ?? "Todos";
+
   const filtered =
-    cat === "Todos"
+    effectiveCat === "Todos"
       ? products
-      : products.filter((p) => p.tags.includes(cat.toLowerCase()));
+      : products.filter((p) => p.tags.includes(effectiveCat.toLowerCase()));
 
   return (
     <>
-      <div className="chip-row">
-        {CATEGORIES.map((c) => (
-          <button
-            key={c}
-            type="button"
-            className={"chip" + (c === cat ? " is-active" : "")}
-            onClick={() => setCat(c)}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
+      {visibleCategories.length > 0 && (
+        <div className="chip-row">
+          {visibleCategories.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={"chip" + (c === effectiveCat ? " is-active" : "")}
+              onClick={() => setCat(c)}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div
@@ -62,10 +82,10 @@ export function Catalog({ products }: CatalogProps) {
             <Icon name="box" size={28} color="#fff" stroke={1.4} />
           </div>
           <div style={{ fontWeight: 700, fontSize: 16 }}>
-            No hay productos en esta categoría
+            Pronto vas a ver más productos acá
           </div>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>
-            Probá con otra categoría o volvé pronto.
+            La banda está armando la colección. Volvé pronto.
           </p>
         </div>
       ) : (

@@ -85,12 +85,14 @@ export async function getActiveProducts(): Promise<Product[]> {
   return (data ?? []).map(dbProductToProduct);
 }
 
-/** All products (active + inactive) for the admin. */
+/** Active products for the admin list. Soft-deleted (is_active=false) ones
+ *  no longer aparecen — "Eliminar" debe sentirse como eliminar de verdad. */
 export async function getAllProducts(): Promise<Product[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("products")
     .select("*")
+    .eq("is_active", true)
     .order("created_at", { ascending: false });
 
   if (error) {
