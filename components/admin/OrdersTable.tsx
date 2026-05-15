@@ -47,8 +47,9 @@ export function OrdersTable({ orders }: OrdersTableProps) {
 
   return (
     <>
-      {/* Filter tabs */}
+      {/* Filter tabs — scrollable on mobile */}
       <div
+        className="admin-filter-tabs"
         style={{
           display: "flex",
           gap: 4,
@@ -80,6 +81,8 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                 borderBottomStyle: "solid",
                 borderBottomWidth: 2,
                 borderBottomColor: active ? "var(--accent)" : "transparent",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
               {f.label}
@@ -101,8 +104,8 @@ export function OrdersTable({ orders }: OrdersTableProps) {
       </div>
 
       {/* Search */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-        <div style={{ position: "relative", flex: 1, maxWidth: 320 }}>
+      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+        <div style={{ position: "relative", flex: 1, minWidth: 180 }}>
           <div
             style={{
               position: "absolute",
@@ -122,14 +125,15 @@ export function OrdersTable({ orders }: OrdersTableProps) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <button className="lds-btn lds-btn-secondary lds-btn-sm">
+        <button className="lds-btn lds-btn-secondary lds-btn-sm admin-desktop-only">
           Últimos 7 días
           <Icon name="chevdown" size={14} color="var(--ink-2)" />
         </button>
       </div>
 
-      {/* Table */}
+      {/* ── Desktop table ── */}
       <div
+        className="admin-desktop-only"
         style={{
           background: "var(--surface)",
           border: "1px solid var(--line)",
@@ -199,6 +203,46 @@ export function OrdersTable({ orders }: OrdersTableProps) {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* ── Mobile card list ── */}
+      <div className="admin-mobile-only" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {filtered.map((o) => (
+          <Link
+            key={o.orderId}
+            href={`/admin/ordenes/${o.orderId}`}
+            className="admin-order-card"
+          >
+            <div className="admin-order-card-top">
+              <span style={{ fontSize: 17, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+                #{o.id}
+              </span>
+              <OrderStatusBadge status={o.status} />
+            </div>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{o.customer}</div>
+            <div style={{ fontSize: 12, color: "var(--ink-3)" }}>{o.email}</div>
+            <div className="admin-order-card-meta" style={{ marginTop: 4 }}>
+              <span style={{ color: "var(--ink-3)", fontSize: 12 }}>
+                {o.items} {o.items === 1 ? "artículo" : "artículos"} · {o.date}
+              </span>
+              <span style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums", fontSize: 15 }}>
+                {formatCOP(o.total)}
+              </span>
+            </div>
+          </Link>
+        ))}
+        {filtered.length === 0 && (
+          <div
+            style={{
+              textAlign: "center",
+              color: "var(--ink-3)",
+              padding: "40px 0",
+              fontSize: 13,
+            }}
+          >
+            No hay pedidos que coincidan con el filtro.
+          </div>
+        )}
       </div>
     </>
   );

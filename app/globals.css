@@ -621,3 +621,332 @@ a {
     transition: none;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   Admin — responsive overrides (mobile < 768px)
+   All admin screens live inside .lds-screen; storefront is untouched.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Desktop-only / Mobile-only helpers ─────────────────────────
+   Used to swap table vs card list, and sidebar vs bottom nav. */
+.admin-desktop-only {
+  display: revert; /* visible on desktop */
+}
+.admin-mobile-only {
+  display: none; /* hidden on desktop */
+}
+
+@media (max-width: 767px) {
+  .admin-desktop-only {
+    display: none !important;
+  }
+  .admin-mobile-only {
+    display: revert !important;
+  }
+}
+
+/* ── AdminShell layout ──────────────────────────────────────────
+   Hide sidebar; show compact top-bar + bottom nav instead.        */
+@media (max-width: 767px) {
+  /* The sidebar aside */
+  .admin-sidebar {
+    display: none !important;
+  }
+
+  /* Mobile top-bar */
+  .admin-mobile-topbar {
+    display: flex !important;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    height: 52px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+
+  /* Main content gets bottom padding so it clears the bottom nav */
+  .admin-main {
+    padding: 14px 14px calc(80px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Page header on mobile */
+  .admin-page-header {
+    min-height: unset !important;
+    padding: 10px 14px !important;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .admin-page-header h2 {
+    font-size: 16px !important;
+  }
+  .admin-page-header-action {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+}
+
+/* Hide the mobile topbar on desktop */
+.admin-mobile-topbar {
+  display: none;
+}
+
+/* ── Bottom nav bar ─────────────────────────────────────────────
+   Hidden on desktop, fixed bottom on mobile.                      */
+.admin-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .admin-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    height: calc(60px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    align-items: stretch;
+  }
+  .admin-bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 4px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--ink-3);
+    text-decoration: none;
+    cursor: pointer;
+    min-height: 44px;
+    transition: color 0.12s;
+  }
+  .admin-bottom-nav-item.is-active {
+    color: var(--accent-ink);
+  }
+  .admin-bottom-nav-item svg {
+    flex-shrink: 0;
+  }
+}
+
+/* ── Dashboard grid ─────────────────────────────────────────────
+   4-col metrics → 2-col; 2fr/1fr content → 1-col stack.          */
+.admin-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.admin-content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 767px) {
+  .admin-metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .admin-content-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+}
+
+/* ── Order detail grid ──────────────────────────────────────────
+   1.4fr/1fr → 1-col; actions panel goes on top on mobile.        */
+.admin-order-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  max-width: 1080px;
+}
+
+@media (max-width: 767px) {
+  .admin-order-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    max-width: 100%;
+  }
+  /* Reorder: actions panel (right col) moves above items (left col) */
+  .admin-order-grid-actions {
+    order: -1;
+  }
+}
+
+/* ── Product form grid ──────────────────────────────────────────
+   2fr/1fr → 1-col.                                               */
+.admin-product-form-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  max-width: 980px;
+}
+
+@media (max-width: 767px) {
+  .admin-product-form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    max-width: 100%;
+  }
+  /* Image section floats to top on mobile */
+  .admin-product-form-sidebar {
+    order: -1;
+  }
+}
+
+/* ── Settings / payment form grids ──────────────────────────────
+   Two-column form rows → single column.                          */
+.admin-form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.admin-form-row-2col-sm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .admin-form-row-2col,
+  .admin-form-row-2col-sm {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Login page ─────────────────────────────────────────────────
+   Hide 460px brand panel on mobile, show only form.              */
+.admin-login-brand {
+  display: flex; /* visible on desktop */
+}
+
+@media (max-width: 767px) {
+  .admin-login-brand {
+    display: none !important;
+  }
+  .admin-login-form-col {
+    padding: 32px 20px !important;
+    justify-content: flex-start !important;
+  }
+  .admin-login-form-col > div {
+    width: 100% !important;
+    max-width: 420px;
+  }
+}
+
+/* ── Product card list (mobile) ─────────────────────────────────
+   Replaces the desktop table on small screens.                   */
+.admin-product-card {
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+}
+.admin-product-card-thumb {
+  width: 60px;
+  height: 60px;
+  background: var(--surface-alt);
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.admin-product-card-body {
+  flex: 1;
+  min-width: 0;
+}
+.admin-product-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.admin-product-card-actions a,
+.admin-product-card-actions button {
+  flex: 1;
+  min-height: 40px;
+  font-size: 13px;
+}
+
+/* ── Order card list (mobile) ───────────────────────────────────
+   Replaces the desktop table on small screens.                   */
+.admin-order-card {
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-decoration: none;
+  color: inherit;
+}
+.admin-order-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.admin-order-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+/* ── Filter tabs — scroll on mobile ────────────────────────────── */
+@media (max-width: 767px) {
+  .admin-filter-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 1px; /* avoid cutting off the border-bottom indicator */
+  }
+  .admin-filter-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .admin-filter-tabs button {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  /* Products search bar — full width on mobile */
+  .admin-search-bar {
+    flex-wrap: wrap;
+  }
+  .admin-search-bar > div:first-child {
+    max-width: 100% !important;
+    min-width: 0;
+  }
+}
+
+/* ── Tappable target minimum ────────────────────────────────────
+   Any 30×30 icon button in admin should be at least 40px touch area. */
+@media (max-width: 767px) {
+  .lds-screen button,
+  .lds-screen a {
+    min-height: unset; /* don't override explicit sizing everywhere */
+  }
+  /* Icon-only action buttons in product table (edit/delete) */
+  .admin-icon-btn {
+    width: 40px !important;
+    height: 40px !important;
+  }
+}

@@ -79,14 +79,7 @@ export function ProductFormFields() {
   }
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "2fr 1fr",
-        gap: 16,
-        maxWidth: 980,
-      }}
-    >
+    <div className="admin-product-form-grid">
       {/* Left: main info */}
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div
@@ -136,13 +129,7 @@ export function ProductFormFields() {
                 placeholder="Describí el producto: material, tallas, detalles."
               />
             </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 12,
-              }}
-            >
+            <div className="admin-form-row-2col-sm">
               <div>
                 <label className="lds-label">Precio (COP)</label>
                 <input
@@ -298,8 +285,8 @@ export function ProductFormFields() {
         </div>
       </div>
 
-      {/* Right: image + visibility */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Right: image + visibility — floats to top on mobile */}
+      <div className="admin-product-form-sidebar" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div
           style={{
             background: "var(--surface)",

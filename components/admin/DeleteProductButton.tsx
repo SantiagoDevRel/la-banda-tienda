@@ -4,13 +4,19 @@ import { useState } from "react";
 import { Icon } from "@/components/icons";
 import { deleteProduct } from "@/lib/actions/products";
 
-export function DeleteProductButton({ productId }: { productId: string }) {
+export function DeleteProductButton({
+  productId,
+  mobile = false,
+}: {
+  productId: string;
+  mobile?: boolean;
+}) {
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
 
   if (confirming) {
     return (
-      <div style={{ display: "flex", gap: 4 }}>
+      <div style={{ display: "flex", gap: 4, flex: mobile ? 1 : undefined }}>
         <button
           onClick={async () => {
             setLoading(true);
@@ -19,14 +25,16 @@ export function DeleteProductButton({ productId }: { productId: string }) {
           }}
           disabled={loading}
           style={{
-            padding: "4px 8px",
-            fontSize: 11,
+            flex: 1,
+            padding: mobile ? "8px 12px" : "4px 8px",
+            fontSize: mobile ? 13 : 11,
             fontWeight: 600,
             borderRadius: "var(--r-sm)",
             background: "rgba(185, 28, 28, 0.15)",
             border: "1px solid rgba(185, 28, 28, 0.35)",
             color: "#f87171",
             cursor: "pointer",
+            minHeight: mobile ? 40 : undefined,
           }}
         >
           {loading ? "…" : "Confirmar"}
@@ -35,17 +43,40 @@ export function DeleteProductButton({ productId }: { productId: string }) {
           onClick={() => setConfirming(false)}
           disabled={loading}
           style={{
-            padding: "4px 6px",
-            fontSize: 11,
+            flex: mobile ? 1 : undefined,
+            padding: mobile ? "8px 12px" : "4px 6px",
+            fontSize: mobile ? 13 : 11,
             borderRadius: "var(--r-sm)",
             background: "var(--surface-alt)",
             border: "1px solid var(--line)",
             cursor: "pointer",
+            minHeight: mobile ? 40 : undefined,
+            color: "var(--ink-2)",
           }}
         >
           No
         </button>
       </div>
+    );
+  }
+
+  if (mobile) {
+    return (
+      <button
+        onClick={() => setConfirming(true)}
+        className="lds-btn lds-btn-danger lds-btn-sm"
+        style={{
+          flex: 1,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          minHeight: 40,
+        }}
+      >
+        <Icon name="trash" size={14} color="#B91C1C" />
+        Eliminar
+      </button>
     );
   }
 

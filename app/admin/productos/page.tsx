@@ -17,8 +17,8 @@ export default async function ProductsPage() {
         title: "Productos",
         subtitle: `${products.length} referencias en catálogo`,
         action: (
-          <div style={{ display: "flex", gap: 10 }}>
-            <button className="lds-btn lds-btn-secondary lds-btn-sm">
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button className="lds-btn lds-btn-secondary lds-btn-sm admin-desktop-only">
               <Icon name="upload" size={15} color="var(--ink-2)" />
               Exportar
             </button>
@@ -28,15 +28,16 @@ export default async function ProductsPage() {
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
               <Icon name="plus" size={15} color="white" stroke={2} />
-              Nuevo producto
+              <span className="admin-desktop-only">Nuevo producto</span>
+              <span className="admin-mobile-only">Nuevo</span>
             </Link>
           </div>
         ),
       }}
     >
       {/* Search + filters bar */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-        <div style={{ position: "relative", flex: 1, maxWidth: 320 }}>
+      <div className="admin-search-bar" style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+        <div style={{ position: "relative", flex: 1, minWidth: 180 }}>
           <div
             style={{
               position: "absolute",
@@ -64,7 +65,9 @@ export default async function ProductsPage() {
         </button>
       </div>
 
+      {/* ── Desktop table ── */}
       <div
+        className="admin-desktop-only"
         style={{
           background: "var(--surface)",
           border: "1px solid var(--line)",
@@ -207,6 +210,75 @@ export default async function ProductsPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* ── Mobile card list ── */}
+      <div className="admin-mobile-only" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {products.map((p) => (
+          <div key={p.id} className="admin-product-card">
+            {/* Thumbnail */}
+            <div className="admin-product-card-thumb">
+              {p.image ? (
+                <img
+                  src={p.image}
+                  alt={p.name}
+                  style={{ width: 60, height: 60, objectFit: "cover" }}
+                />
+              ) : (
+                <ProductGlyph
+                  kind={p.glyph}
+                  color={p.color}
+                  bare
+                  style={{ width: 40, height: 40 }}
+                />
+              )}
+            </div>
+
+            {/* Body */}
+            <div className="admin-product-card-body">
+              <div style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.3 }}>
+                {p.name}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2, textTransform: "capitalize" }}>
+                {p.tags[0]}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+                  {formatCOP(p.price)}
+                </span>
+                <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
+                  Stock: {p.stock}
+                </span>
+                <StockBadge status={p.status} />
+              </div>
+
+              {/* Action buttons — full width, easy to tap */}
+              <div className="admin-product-card-actions">
+                <Link
+                  href={`/admin/productos/nuevo?edit=${p.id}`}
+                  className="lds-btn lds-btn-secondary lds-btn-sm"
+                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                >
+                  <Icon name="edit" size={14} color="var(--ink-2)" />
+                  Editar
+                </Link>
+                <DeleteProductButton productId={p.id} mobile />
+              </div>
+            </div>
+          </div>
+        ))}
+        {products.length === 0 && (
+          <div
+            style={{
+              textAlign: "center",
+              color: "var(--ink-3)",
+              padding: "40px 0",
+              fontSize: 13,
+            }}
+          >
+            No hay productos. Creá el primero.
+          </div>
+        )}
       </div>
     </AdminShell>
   );

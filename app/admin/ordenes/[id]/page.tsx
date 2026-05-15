@@ -48,14 +48,7 @@ export default async function OrderDetailPage({
         action: <OrderStatusBadge status={order.status} />,
       }}
     >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.4fr 1fr",
-          gap: 16,
-          maxWidth: 1080,
-        }}
-      >
+      <div className="admin-order-grid">
         {/* Left: items + screenshot */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Items */}
@@ -298,8 +291,8 @@ export default async function OrderDetailPage({
           </div>
         </div>
 
-        {/* Right: customer + actions */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Right: customer + actions — floats above items on mobile */}
+        <div className="admin-order-grid-actions" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Customer card */}
           <div
             style={{

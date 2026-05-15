@@ -1,4 +1,4 @@
-// Admin login — two-column layout, NO AdminShell.
+// Admin login — two-column layout on desktop, form-only on mobile.
 import { Logo } from "@/components/icons";
 import { LoginForm } from "@/components/admin/LoginForm";
 
@@ -6,18 +6,19 @@ export default function LoginPage() {
   return (
     <div
       className="lds-screen"
-      style={{ display: "flex", background: "var(--bg)" }}
+      style={{ display: "flex", background: "var(--bg)", minHeight: "100dvh" }}
     >
-      {/* Left: brand */}
+      {/* Left: brand panel — hidden on mobile */}
       <div
+        className="admin-login-brand"
         style={{
           width: 460,
           background: "var(--surface)",
           borderRight: "1px solid var(--line)",
           padding: "60px 56px",
-          display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
+          flexShrink: 0,
         }}
       >
         <Logo size="lg" />
@@ -66,14 +67,20 @@ export default function LoginPage() {
 
       {/* Right: form */}
       <div
+        className="admin-login-form-col"
         style={{
           flex: 1,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          padding: "40px 24px",
         }}
       >
-        <div style={{ width: 380 }}>
+        <div style={{ width: 380, maxWidth: "100%" }}>
+          {/* Small logo shown only on mobile (brand panel hidden) */}
+          <div className="admin-mobile-only" style={{ marginBottom: 28 }}>
+            <Logo size="md" />
+          </div>
           <h2 style={{ fontSize: 24 }}>Iniciar sesión</h2>
           <p style={{ fontSize: 13, color: "var(--ink-2)", marginTop: 6 }}>
             Ingresá con tu correo y contraseña de administrador.

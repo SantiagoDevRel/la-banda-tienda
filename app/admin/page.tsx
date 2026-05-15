@@ -113,13 +113,7 @@ export default async function DashboardPage() {
       }}
     >
       {/* Metric cards */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 16,
-        }}
-      >
+      <div className="admin-metric-grid">
         <MetricCard
           label="Pedidos pendientes"
           value={metrics.pendingCount}
@@ -153,14 +147,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Bottom row */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "2fr 1fr",
-          gap: 16,
-          marginTop: 16,
-        }}
-      >
+      <div className="admin-content-grid">
         {/* Recent orders */}
         <div
           style={{
@@ -195,62 +182,95 @@ export default async function DashboardPage() {
               Ver todos →
             </Link>
           </div>
-          <table className="lds-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Cliente</th>
-                <th>Estado</th>
-                <th style={{ textAlign: "right" }}>Total</th>
-                <th>Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentOrders.slice(0, 5).map((o) => (
-                <tr key={o.orderId}>
-                  <td
-                    style={{
-                      fontWeight: 600,
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    #{o.id}
-                  </td>
-                  <td>{o.customer}</td>
-                  <td>
-                    <OrderStatusBadge status={o.status} />
-                  </td>
-                  <td
-                    style={{
-                      textAlign: "right",
-                      fontVariantNumeric: "tabular-nums",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {formatCOP(o.total)}
-                  </td>
-                  <td style={{ color: "var(--ink-3)", fontSize: 13 }}>
-                    {o.date}
-                  </td>
-                </tr>
-              ))}
-              {recentOrders.length === 0 && (
+          {/* Desktop table */}
+          <div className="admin-desktop-only">
+            <table className="lds-table">
+              <thead>
                 <tr>
-                  <td
-                    colSpan={5}
-                    style={{
-                      textAlign: "center",
-                      color: "var(--ink-3)",
-                      padding: "32px 0",
-                      fontSize: 13,
-                    }}
-                  >
-                    No hay pedidos todavía.
-                  </td>
+                  <th>#</th>
+                  <th>Cliente</th>
+                  <th>Estado</th>
+                  <th style={{ textAlign: "right" }}>Total</th>
+                  <th>Fecha</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recentOrders.slice(0, 5).map((o) => (
+                  <tr key={o.orderId}>
+                    <td
+                      style={{
+                        fontWeight: 600,
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      #{o.id}
+                    </td>
+                    <td>{o.customer}</td>
+                    <td>
+                      <OrderStatusBadge status={o.status} />
+                    </td>
+                    <td
+                      style={{
+                        textAlign: "right",
+                        fontVariantNumeric: "tabular-nums",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {formatCOP(o.total)}
+                    </td>
+                    <td style={{ color: "var(--ink-3)", fontSize: 13 }}>
+                      {o.date}
+                    </td>
+                  </tr>
+                ))}
+                {recentOrders.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      style={{
+                        textAlign: "center",
+                        color: "var(--ink-3)",
+                        padding: "32px 0",
+                        fontSize: 13,
+                      }}
+                    >
+                      No hay pedidos todavía.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile card list */}
+          <div className="admin-mobile-only" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "10px 12px" }}>
+            {recentOrders.slice(0, 5).map((o) => (
+              <Link
+                key={o.orderId}
+                href={`/admin/ordenes/${o.orderId}`}
+                className="admin-order-card"
+              >
+                <div className="admin-order-card-top">
+                  <span style={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+                    #{o.id}
+                  </span>
+                  <OrderStatusBadge status={o.status} />
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{o.customer}</div>
+                <div className="admin-order-card-meta">
+                  <span style={{ color: "var(--ink-3)" }}>{o.date}</span>
+                  <span style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+                    {formatCOP(o.total)}
+                  </span>
+                </div>
+              </Link>
+            ))}
+            {recentOrders.length === 0 && (
+              <div style={{ textAlign: "center", color: "var(--ink-3)", padding: "24px 0", fontSize: 13 }}>
+                No hay pedidos todavía.
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right column */}

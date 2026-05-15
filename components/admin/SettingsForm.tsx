@@ -77,12 +77,8 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             </div>
           </div>
           <div
-            style={{
-              marginTop: 16,
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 14,
-            }}
+            className="admin-form-row-2col"
+            style={{ marginTop: 16 }}
           >
             <div>
               <label className="lds-label">Nombre de la tienda</label>
@@ -126,12 +122,8 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             />
           </div>
           <div
-            style={{
-              marginTop: 14,
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 14,
-            }}
+            className="admin-form-row-2col"
+            style={{ marginTop: 14 }}
           >
             <div>
               <label className="lds-label">Costo de envío estándar</label>

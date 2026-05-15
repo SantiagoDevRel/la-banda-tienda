@@ -77,13 +77,7 @@ function MethodForm({
       onSubmit={handleSubmit}
       style={{ display: "flex", flexDirection: "column", gap: 12 }}
     >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 12,
-        }}
-      >
+      <div className="admin-form-row-2col-sm">
         <div>
           <label className="lds-label">Etiqueta (visible al cliente)</label>
           <input
@@ -107,13 +101,7 @@ function MethodForm({
           </select>
         </div>
       </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 12,
-        }}
-      >
+      <div className="admin-form-row-2col-sm">
         <div>
           <label className="lds-label">Número / cuenta</label>
           <input

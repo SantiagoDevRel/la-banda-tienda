@@ -42,8 +42,9 @@ export function AdminShell({
 
   return (
     <div className="lds-screen" style={{ display: "flex", background: "var(--bg)" }}>
-      {/* Sidebar */}
+      {/* ── Desktop Sidebar (hidden on mobile via CSS) ── */}
       <aside
+        className="admin-sidebar"
         style={{
           width: 220,
           background: "var(--surface)",
@@ -162,7 +163,7 @@ export function AdminShell({
         </div>
       </aside>
 
-      {/* Main */}
+      {/* ── Main area ── */}
       <div
         style={{
           flex: 1,
@@ -171,8 +172,38 @@ export function AdminShell({
           minWidth: 0,
         }}
       >
+        {/* Mobile top-bar (hidden on desktop via CSS) */}
+        <div className="admin-mobile-topbar">
+          <Link href="/admin">
+            <Logo size="sm" />
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            aria-label="Cerrar sesión"
+            style={{
+              background: "var(--surface-alt)",
+              border: "1px solid var(--line)",
+              borderRadius: "var(--r-sm)",
+              padding: "6px 10px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 12,
+              fontWeight: 500,
+              color: "var(--ink-2)",
+            }}
+          >
+            <Icon name="logout" size={14} color="var(--ink-3)" />
+            Salir
+          </button>
+        </div>
+
+        {/* Page header */}
         {page && (
           <header
+            className="admin-page-header"
             style={{
               minHeight: 64,
               borderBottom: "1px solid var(--line)",
@@ -187,7 +218,7 @@ export function AdminShell({
               zIndex: 10,
             }}
           >
-            <div>
+            <div style={{ minWidth: 0 }}>
               <h2 style={{ fontSize: 19, fontWeight: 700 }}>{page.title}</h2>
               {page.subtitle && (
                 <div
@@ -201,11 +232,38 @@ export function AdminShell({
                 </div>
               )}
             </div>
-            {page.action}
+            {page.action && (
+              <div className="admin-page-header-action">{page.action}</div>
+            )}
           </header>
         )}
-        <main style={{ flex: 1, padding: 24 }}>{children}</main>
+
+        <main className="admin-main" style={{ flex: 1, padding: 24 }}>
+          {children}
+        </main>
       </div>
+
+      {/* ── Mobile bottom nav (hidden on desktop via CSS) ── */}
+      <nav className="admin-bottom-nav" aria-label="Navegación admin">
+        {NAV.map((n) => {
+          const active = n.id === section;
+          return (
+            <Link
+              key={n.id}
+              href={n.href}
+              className={`admin-bottom-nav-item${active ? " is-active" : ""}`}
+            >
+              <Icon
+                name={n.icon}
+                size={20}
+                color={active ? "var(--accent-ink)" : "var(--ink-3)"}
+                stroke={active ? 2 : 1.6}
+              />
+              {n.label}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
