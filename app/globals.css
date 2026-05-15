@@ -355,13 +355,34 @@ a {
 }
 
 /* ── Admin screen root ───────────────────────────────────────── */
+/* Re-scopes the design tokens to a SOLID DARK theme (no video backdrop —
+   the admin has a plain dark background, not translucent glass). */
 .lds-screen {
   font-family: var(--font-body);
-  color: var(--ink);
-  background: var(--bg);
   width: 100%;
   min-height: 100dvh;
   letter-spacing: -0.005em;
+  color: var(--ink); /* inherits into all plain-text descendants */
+
+  --bg: #14171a;
+  --surface: #1d2125;
+  --surface-alt: #252a30;
+  --ink: #f0f2f1;
+  --ink-2: rgba(230, 235, 232, 0.72);
+  --ink-3: rgba(230, 235, 232, 0.45);
+  --ink-4: rgba(230, 235, 232, 0.24);
+  --line: rgba(255, 255, 255, 0.1);
+  --line-2: rgba(255, 255, 255, 0.06);
+  --accent-tint: rgba(46, 161, 92, 0.18);
+  --accent-ink: #6fd99a;
+  --glyph-stroke: rgba(200, 230, 210, 0.5);
+
+  background: var(--bg);
+}
+
+/* Product glyph placeholders — light stroke on dark surfaces */
+.lds-screen .lds-glyph * {
+  stroke: var(--glyph-stroke);
 }
 
 /* ════════════════════════════════════════════════════════════════

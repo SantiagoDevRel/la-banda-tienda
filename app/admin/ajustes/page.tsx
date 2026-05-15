@@ -1,20 +1,34 @@
 // Admin settings — ScreenSettings
 import { AdminShell } from "@/components/AdminShell";
-import { getStoreSettings } from "@/lib/queries";
+import { getStoreSettings, getAllPaymentMethods } from "@/lib/queries";
 import { SettingsForm } from "@/components/admin/SettingsForm";
+import { PaymentMethodsManager } from "@/components/admin/PaymentMethodsManager";
 
 export default async function AjustesPage() {
-  const settings = await getStoreSettings();
+  const [settings, paymentMethods] = await Promise.all([
+    getStoreSettings(),
+    getAllPaymentMethods(),
+  ]);
 
   return (
     <AdminShell
       section="settings"
       page={{
         title: "Ajustes de la tienda",
-        subtitle: "Datos públicos, cuenta para cobrar y políticas de envío.",
+        subtitle: "Datos públicos, medios de pago y políticas de envío.",
       }}
     >
-      <SettingsForm settings={settings} />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 20,
+          maxWidth: 840,
+        }}
+      >
+        <SettingsForm settings={settings} />
+        <PaymentMethodsManager initialMethods={paymentMethods} />
+      </div>
     </AdminShell>
   );
 }

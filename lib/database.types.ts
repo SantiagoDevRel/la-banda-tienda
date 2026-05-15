@@ -123,6 +123,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      payment_methods: {
+        Row: {
+          account_number: string;
+          created_at: string;
+          holder: string;
+          id: string;
+          instructions: string;
+          is_active: boolean;
+          kind: string;
+          label: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          account_number?: string;
+          created_at?: string;
+          holder?: string;
+          id?: string;
+          instructions?: string;
+          is_active?: boolean;
+          kind?: string;
+          label: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          account_number?: string;
+          created_at?: string;
+          holder?: string;
+          id?: string;
+          instructions?: string;
+          is_active?: boolean;
+          kind?: string;
+          label?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       products: {
         Row: {
           category: string;

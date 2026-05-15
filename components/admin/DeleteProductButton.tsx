@@ -23,9 +23,9 @@ export function DeleteProductButton({ productId }: { productId: string }) {
             fontSize: 11,
             fontWeight: 600,
             borderRadius: "var(--r-sm)",
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
-            color: "#b91c1c",
+            background: "rgba(185, 28, 28, 0.15)",
+            border: "1px solid rgba(185, 28, 28, 0.35)",
+            color: "#f87171",
             cursor: "pointer",
           }}
         >

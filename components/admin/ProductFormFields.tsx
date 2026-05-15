@@ -348,7 +348,7 @@ export function ProductFormFields() {
                     height: 30,
                     borderRadius: "var(--r-sm)",
                     border: "none",
-                    background: "rgba(255,255,255,0.9)",
+                    background: "rgba(29, 33, 37, 0.85)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",

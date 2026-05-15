@@ -1,14 +1,9 @@
 import { NequiScreen } from "@/components/storefront/NequiScreen";
-import { getStoreSettings } from "@/lib/queries";
+import { getActivePaymentMethods } from "@/lib/queries";
 
-// 06 · Pago con Nequi — server component fetches Nequi details from DB.
+// 06 · Pago — server component fetches active payment methods from DB.
 export default async function NequiPage() {
-  const settings = await getStoreSettings();
+  const paymentMethods = await getActivePaymentMethods();
 
-  return (
-    <NequiScreen
-      nequiNumber={settings.nequiNumber}
-      nequiHolder={settings.nequiHolder}
-    />
-  );
+  return <NequiScreen paymentMethods={paymentMethods} />;
 }

@@ -35,8 +35,6 @@ export function dbSettingsToSettings(row: DbSettings): Settings & {
 } {
   return {
     storeName: row.store_name,
-    nequiNumber: row.nequi_number,
-    nequiHolder: row.nequi_holder,
     whatsapp: row.whatsapp,
     shippingInfo: row.shipping_info,
     shippingCost: row.shipping_cost,
@@ -129,8 +127,6 @@ export async function getStoreSettings() {
     // Fallback so the app never crashes if settings row is missing
     return {
       storeName: "Tienda La Banda",
-      nequiNumber: "",
-      nequiHolder: "",
       whatsapp: "",
       shippingInfo: "",
       shippingCost: 12000,
@@ -236,6 +232,42 @@ export async function getOrderWithItems(id: string): Promise<OrderDetail | null>
     orderItems,
     screenshotUrl,
   };
+}
+
+// ── Payment methods ─────────────────────────────────────────────────────────
+
+export type PaymentMethod =
+  Database["public"]["Tables"]["payment_methods"]["Row"];
+
+/** Active payment methods ordered by sort_order (storefront). */
+export async function getActivePaymentMethods(): Promise<PaymentMethod[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payment_methods")
+    .select("*")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("[getActivePaymentMethods]", error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
+/** All payment methods (active + inactive) for the admin. */
+export async function getAllPaymentMethods(): Promise<PaymentMethod[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payment_methods")
+    .select("*")
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("[getAllPaymentMethods]", error.message);
+    return [];
+  }
+  return data ?? [];
 }
 
 // ── Dashboard metrics ───────────────────────────────────────────────────────

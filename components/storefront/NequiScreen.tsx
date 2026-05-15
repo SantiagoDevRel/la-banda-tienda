@@ -1,8 +1,8 @@
 "use client";
 
-// 06 · Pago con Nequi — ported from ScreenNequi.
-// Shows the amount + Nequi account, lets the customer upload the payment
-// screenshot, calls the createOrder server action, then shows confirmation.
+// 06 · Pago — ported from ScreenNequi.
+// Shows the amount + active payment methods, lets the customer upload the
+// payment screenshot, calls the createOrder server action, then confirms.
 
 import {
   useEffect,
@@ -18,19 +18,19 @@ import { useCart } from "@/lib/cart";
 import { saveLastOrder } from "@/lib/lastOrder";
 import { createOrder } from "@/lib/actions/orders";
 import { compressImage } from "@/lib/imageCompress";
+import type { PaymentMethod } from "@/lib/queries";
 
 const STEPS = [
-  "Transferí el monto exacto a esta cuenta Nequi.",
+  "Transferí el monto exacto a uno de los medios de pago de abajo.",
   "Tomá captura del comprobante.",
   "Subila acá abajo y confirmá.",
 ];
 
 interface NequiScreenProps {
-  nequiNumber: string;
-  nequiHolder: string;
+  paymentMethods: PaymentMethod[];
 }
 
-export function NequiScreen({ nequiNumber, nequiHolder }: NequiScreenProps) {
+export function NequiScreen({ paymentMethods }: NequiScreenProps) {
   const { items, subtotal, shipping, total, ready, clear } = useCart();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -38,7 +38,7 @@ export function NequiScreen({ nequiNumber, nequiHolder }: NequiScreenProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const [fileError, setFileError] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
@@ -66,7 +66,6 @@ export function NequiScreen({ nequiNumber, nequiHolder }: NequiScreenProps) {
       return;
     }
     setFileError("");
-    // Se comprime en el navegador antes de subir — ahorra storage y datos.
     const compressed = await compressImage(f);
     setSelectedFile(compressed);
     setPreview((prev) => {
@@ -76,12 +75,12 @@ export function NequiScreen({ nequiNumber, nequiHolder }: NequiScreenProps) {
     setFileName(f.name);
   }
 
-  function copyAccount() {
+  function copyAccount(method: PaymentMethod) {
     navigator.clipboard
-      ?.writeText(nequiNumber.replace(/\s/g, ""))
+      ?.writeText(method.account_number.replace(/\s/g, ""))
       .then(() => {
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 1800);
+        setCopiedId(method.id);
+        window.setTimeout(() => setCopiedId(null), 1800);
       })
       .catch(() => {});
   }
@@ -111,7 +110,6 @@ export function NequiScreen({ nequiNumber, nequiHolder }: NequiScreenProps) {
       /* ignore */
     }
 
-    // Build FormData for the screenshot
     const formData = new FormData();
     formData.set("screenshot", selectedFile);
 
@@ -139,7 +137,6 @@ export function NequiScreen({ nequiNumber, nequiHolder }: NequiScreenProps) {
       return;
     }
 
-    // Save snapshot for confirmation page
     saveLastOrder({
       number: `#${result.orderNumber}`,
       customerName,
@@ -156,7 +153,7 @@ export function NequiScreen({ nequiNumber, nequiHolder }: NequiScreenProps) {
   if (!ready || (items.length === 0 && !submitting)) {
     return (
       <div className="store-screen">
-        <StoreHeader title="Pago con Nequi" back hideCart />
+        <StoreHeader title="Pago" back hideCart />
         <div style={{ flex: 1 }} />
       </div>
     );
@@ -164,7 +161,7 @@ export function NequiScreen({ nequiNumber, nequiHolder }: NequiScreenProps) {
 
   return (
     <div className="store-screen">
-      <StoreHeader title="Pago con Nequi" back hideCart />
+      <StoreHeader title="Pago" back hideCart />
       <div className="store-body">
         <div className="store-sheet" style={{ padding: "16px 18px 18px" }}>
           <div
@@ -176,7 +173,7 @@ export function NequiScreen({ nequiNumber, nequiHolder }: NequiScreenProps) {
               textTransform: "uppercase",
             }}
           >
-            Pago con Nequi
+            Transferencia
           </div>
           <h2 style={{ fontSize: 19, marginTop: 4 }}>
             Transferí y subí el pantallazo
@@ -218,93 +215,192 @@ export function NequiScreen({ nequiNumber, nequiHolder }: NequiScreenProps) {
             </div>
           </div>
 
-          {/* Account */}
-          <div
-            style={{
-              marginTop: 12,
-              background: "var(--surface)",
-              border: "1px solid var(--line)",
-              borderRadius: "var(--r-lg)",
-              padding: 14,
-            }}
-          >
+          {/* Payment method cards */}
+          {paymentMethods.length === 0 ? (
+            <div
+              style={{
+                marginTop: 12,
+                padding: "16px",
+                background: "var(--surface)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--r-lg)",
+                fontSize: 13,
+                color: "var(--ink-2)",
+                textAlign: "center",
+                lineHeight: 1.5,
+              }}
+            >
+              Contactá a la tienda para coordinar el pago.
+            </div>
+          ) : (
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "8px 0",
+                flexDirection: "column",
                 gap: 10,
+                marginTop: 12,
               }}
             >
-              <div style={{ minWidth: 0 }}>
+              {paymentMethods.map((method) => (
                 <div
+                  key={method.id}
                   style={{
-                    fontSize: 11,
-                    color: "var(--ink-3)",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    fontWeight: 600,
+                    background: "var(--surface)",
+                    border: "1px solid var(--line)",
+                    borderRadius: "var(--r-lg)",
+                    padding: 14,
                   }}
                 >
-                  Cuenta Nequi
+                  {/* Method label header */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      marginBottom: 10,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: "var(--r-sm)",
+                        background:
+                          method.kind === "nequi"
+                            ? "linear-gradient(135deg, #7C3AED 0%, #DB2777 100%)"
+                            : method.kind === "bank"
+                              ? "linear-gradient(135deg, #1e7a3d 0%, #155a2b 100%)"
+                              : "var(--surface-alt)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 8,
+                        fontWeight: 800,
+                        color: "white",
+                        letterSpacing: "0.02em",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {method.kind === "nequi"
+                        ? "NQ"
+                        : method.kind === "bank"
+                          ? "BK"
+                          : "PM"}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "var(--ink-2)",
+                        letterSpacing: "0.04em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {method.label}
+                    </div>
+                  </div>
+
+                  {/* Account number row */}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "8px 0",
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: "var(--ink-3)",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Número / cuenta
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 17,
+                          fontWeight: 700,
+                          marginTop: 3,
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {method.account_number}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => copyAccount(method)}
+                      style={{
+                        padding: "7px 12px",
+                        borderRadius: "var(--r-sm)",
+                        background: "var(--accent-tint)",
+                        color: "var(--accent-ink)",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        border: "none",
+                        cursor: "pointer",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Icon
+                        name="check"
+                        size={14}
+                        color="var(--accent-ink)"
+                        stroke={2.2}
+                      />
+                      {copiedId === method.id ? "Copiado" : "Copiar"}
+                    </button>
+                  </div>
+
+                  <hr className="lds-divider" style={{ margin: "6px 0" }} />
+
+                  {/* Holder */}
+                  <div style={{ padding: "8px 0" }}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--ink-3)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        fontWeight: 600,
+                      }}
+                    >
+                      A nombre de
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 600, marginTop: 3 }}>
+                      {method.holder}
+                    </div>
+                  </div>
+
+                  {/* Instructions if present */}
+                  {method.instructions && (
+                    <div
+                      style={{
+                        marginTop: 4,
+                        padding: "8px 10px",
+                        background: "var(--surface-alt)",
+                        borderRadius: "var(--r-sm)",
+                        fontSize: 12,
+                        color: "var(--ink-2)",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {method.instructions}
+                    </div>
+                  )}
                 </div>
-                <div
-                  style={{
-                    fontSize: 17,
-                    fontWeight: 700,
-                    marginTop: 3,
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {nequiNumber}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={copyAccount}
-                style={{
-                  padding: "7px 12px",
-                  borderRadius: "var(--r-sm)",
-                  background: "var(--accent-tint)",
-                  color: "var(--accent-ink)",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  border: "none",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-              >
-                <Icon
-                  name="check"
-                  size={14}
-                  color="var(--accent-ink)"
-                  stroke={2.2}
-                />
-                {copied ? "Copiado" : "Copiar"}
-              </button>
+              ))}
             </div>
-            <hr className="lds-divider" style={{ margin: "6px 0" }} />
-            <div style={{ padding: "8px 0" }}>
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "var(--ink-3)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  fontWeight: 600,
-                }}
-              >
-                A nombre de
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 600, marginTop: 3 }}>
-                {nequiHolder}
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Steps */}
           <div style={{ marginTop: 18 }}>
@@ -370,7 +466,6 @@ export function NequiScreen({ nequiNumber, nequiHolder }: NequiScreenProps) {
                 alignItems: "center",
               }}
             >
-              {/* user-uploaded preview */}
               <img
                 src={preview}
                 alt="Comprobante de pago"

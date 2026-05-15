@@ -108,7 +108,7 @@ export default async function DashboardPage() {
     <AdminShell
       section="dashboard"
       page={{
-        title: "Hola, Carlos 👋",
+        title: "Hola, Jeison 👋",
         subtitle: "Acá tenés un resumen de la tienda hoy.",
       }}
     >

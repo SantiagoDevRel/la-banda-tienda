@@ -127,7 +127,7 @@ export function AdminShell({
                 fontSize: 13,
               }}
             >
-              CM
+              JR
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
@@ -138,7 +138,7 @@ export function AdminShell({
                   lineHeight: 1.2,
                 }}
               >
-                Carlos M.
+                Jeison Rasta
               </div>
               <div style={{ fontSize: 11, color: "var(--ink-3)" }}>Admin</div>
             </div>

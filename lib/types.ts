@@ -41,8 +41,6 @@ export interface Order {
 
 export interface Settings {
   storeName: string;
-  nequiNumber: string;
-  nequiHolder: string;
   whatsapp: string;
   shippingInfo: string;
 }

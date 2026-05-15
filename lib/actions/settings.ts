@@ -31,8 +31,6 @@ export async function saveSettings(
       .from("store_settings")
       .update({
         store_name: formData.get("storeName") as string,
-        nequi_number: formData.get("nequiNumber") as string,
-        nequi_holder: formData.get("nequiHolder") as string,
         whatsapp: formData.get("whatsapp") as string,
         shipping_info: formData.get("shippingInfo") as string,
         shipping_cost: parseInt(shippingCostRaw, 10),

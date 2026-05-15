@@ -70,16 +70,16 @@ export function OrderActions({
         <div
           style={{
             padding: "12px 14px",
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
+            background: "rgba(185, 28, 28, 0.15)",
+            border: "1px solid rgba(185, 28, 28, 0.35)",
             borderRadius: "var(--r-md)",
             marginBottom: 8,
           }}
         >
-          <div style={{ fontSize: 13, fontWeight: 600, color: "#991b1b" }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#f87171" }}>
             ¿Cancelar este pedido?
           </div>
-          <div style={{ fontSize: 12, color: "#b91c1c", marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: "#fca5a5", marginTop: 4 }}>
             Esta acción restaura el stock de los productos.
           </div>
           <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
