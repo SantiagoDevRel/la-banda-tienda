@@ -4,7 +4,7 @@
 // Real, interactive cart: qty stepper + remove, totals recompute live.
 
 import Link from "next/link";
-import { Icon, ProductGlyph } from "@/components/icons";
+import { Icon } from "@/components/icons";
 import { QtyStepper } from "@/components/QtyStepper";
 import { Money } from "@/components/ui";
 import { StoreHeader } from "@/components/StoreHeader";
@@ -52,18 +52,23 @@ export default function CartPage() {
                     height: 72,
                     background: "var(--surface-alt)",
                     borderRadius: "var(--r-md)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    overflow: "hidden",
                     flexShrink: 0,
+                    display: "block",
                   }}
                 >
-                  <ProductGlyph
-                    kind={it.product.glyph}
-                    color={it.product.color}
-                    bare
-                    style={{ width: 50, height: 50 }}
-                  />
+                  {it.product.image && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={it.product.image}
+                      alt={it.product.name}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  )}
                 </Link>
                 <div
                   style={{

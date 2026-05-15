@@ -153,17 +153,22 @@ export async function createOrder(
   const shipping = orderRow?.shipping ?? 0;
   const total = orderRow?.total ?? 0;
 
-  // 5. Send notification email (fire-and-forget — never throw)
-  sendNewOrderEmail({
-    orderNumber: new_order_number,
-    orderId: new_order_id,
-    customerName: customer.name,
-    customerEmail: customer.email,
-    items,
-    total,
-  }).catch((err) =>
-    console.error("[createOrder] email send failed:", err),
-  );
+  // 5. Send notification email.
+  // IMPORTANT: we AWAIT this. With fire-and-forget the serverless function
+  // can terminate before the Resend API call completes and the email gets
+  // silently lost. ~200ms latency in exchange for actually delivering.
+  try {
+    await sendNewOrderEmail({
+      orderNumber: new_order_number,
+      orderId: new_order_id,
+      customerName: customer.name,
+      customerEmail: customer.email,
+      items,
+      total,
+    });
+  } catch (err) {
+    console.error("[createOrder] email send failed:", err);
+  }
 
   return {
     ok: true,
