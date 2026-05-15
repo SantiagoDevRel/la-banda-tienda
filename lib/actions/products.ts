@@ -26,29 +26,32 @@ export interface ProductFormData {
   imageFile?: File | null;
 }
 
+/** Upload one image file to product-images bucket, return public URL or null. */
+async function uploadImageFile(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  file: File,
+): Promise<string | null> {
+  const ext = file.name.split(".").pop() ?? "jpg";
+  const path = `${crypto.randomUUID()}.${ext}`;
+  const { error: uploadErr } = await supabase.storage
+    .from("product-images")
+    .upload(path, file, { contentType: file.type, upsert: false });
+
+  if (uploadErr) {
+    console.error("[uploadImageFile]", uploadErr.message);
+    return null;
+  }
+  const { data: urlData } = supabase.storage
+    .from("product-images")
+    .getPublicUrl(path);
+  return urlData.publicUrl;
+}
+
 export async function createProduct(
   formData: FormData,
 ): Promise<{ ok: true; id: string } | { ok: false; message: string }> {
   try {
     const { supabase } = await requireAdmin();
-
-    // Upload image if provided
-    let imageUrl: string | null = null;
-    const imageFile = formData.get("imageFile") as File | null;
-    if (imageFile && imageFile.size > 0) {
-      const ext = imageFile.name.split(".").pop() ?? "jpg";
-      const path = `${crypto.randomUUID()}.${ext}`;
-      const { error: uploadErr } = await supabase.storage
-        .from("product-images")
-        .upload(path, imageFile, { contentType: imageFile.type, upsert: false });
-
-      if (!uploadErr) {
-        const { data: urlData } = supabase.storage
-          .from("product-images")
-          .getPublicUrl(path);
-        imageUrl = urlData.publicUrl;
-      }
-    }
 
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
@@ -61,6 +64,19 @@ export async function createProduct(
     const glyph = (formData.get("glyph") as string) || "shirt";
     const color = (formData.get("color") as string) || "#1E7A3D";
     const isActive = formData.get("isActive") !== "false";
+
+    // Upload all image files
+    const imageFiles = formData.getAll("imageFiles") as File[];
+    const uploadedUrls: string[] = [];
+    for (const file of imageFiles) {
+      if (file && file.size > 0) {
+        const url = await uploadImageFile(supabase, file);
+        if (url) uploadedUrls.push(url);
+      }
+    }
+
+    // Cover = first uploaded URL (or null if no images)
+    const imageUrl = uploadedUrls[0] ?? null;
 
     const { data, error } = await supabase
       .from("products")
@@ -82,6 +98,21 @@ export async function createProduct(
       return { ok: false, message: error?.message ?? "Error al crear el producto." };
     }
 
+    // Insert gallery rows
+    if (uploadedUrls.length > 0) {
+      const galleryRows = uploadedUrls.map((url, idx) => ({
+        product_id: data.id,
+        url,
+        sort_order: idx,
+      }));
+      const { error: galleryErr } = await supabase
+        .from("product_images")
+        .insert(galleryRows);
+      if (galleryErr) {
+        console.error("[createProduct] gallery insert error:", galleryErr.message);
+      }
+    }
+
     revalidatePath("/admin/productos");
     revalidatePath("/");
 
@@ -98,23 +129,62 @@ export async function updateProduct(
   try {
     const { supabase } = await requireAdmin();
 
-    // Upload image if provided
-    let imageUrl: string | undefined = undefined;
-    const imageFile = formData.get("imageFile") as File | null;
-    if (imageFile && imageFile.size > 0) {
-      const ext = imageFile.name.split(".").pop() ?? "jpg";
-      const path = `${crypto.randomUUID()}.${ext}`;
-      const { error: uploadErr } = await supabase.storage
-        .from("product-images")
-        .upload(path, imageFile, { contentType: imageFile.type, upsert: false });
+    // Existing image IDs to keep (in the desired order)
+    const keepIdsRaw = formData.get("keepImageIds") as string | null;
+    const keepImageIds: string[] = keepIdsRaw ? JSON.parse(keepIdsRaw) : [];
 
-      if (!uploadErr) {
-        const { data: urlData } = supabase.storage
-          .from("product-images")
-          .getPublicUrl(path);
-        imageUrl = urlData.publicUrl;
+    // Upload new image files
+    const imageFiles = formData.getAll("imageFiles") as File[];
+    const newUploadedUrls: string[] = [];
+    for (const file of imageFiles) {
+      if (file && file.size > 0) {
+        const url = await uploadImageFile(supabase, file);
+        if (url) newUploadedUrls.push(url);
       }
     }
+
+    // Delete gallery rows NOT in keepImageIds
+    const { data: existingImages } = await supabase
+      .from("product_images")
+      .select("id")
+      .eq("product_id", productId);
+
+    const allExistingIds = (existingImages ?? []).map((r) => r.id);
+    const toDelete = allExistingIds.filter((id) => !keepImageIds.includes(id));
+    if (toDelete.length > 0) {
+      await supabase
+        .from("product_images")
+        .delete()
+        .in("id", toDelete);
+    }
+
+    // Re-index kept images to match the desired order
+    for (let i = 0; i < keepImageIds.length; i++) {
+      await supabase
+        .from("product_images")
+        .update({ sort_order: i })
+        .eq("id", keepImageIds[i]);
+    }
+
+    // Insert new images, sort_order continues after kept ones
+    const startOrder = keepImageIds.length;
+    if (newUploadedUrls.length > 0) {
+      const galleryRows = newUploadedUrls.map((url, idx) => ({
+        product_id: productId,
+        url,
+        sort_order: startOrder + idx,
+      }));
+      await supabase.from("product_images").insert(galleryRows);
+    }
+
+    // Determine new cover (first gallery image by sort_order)
+    const { data: galleryRows } = await supabase
+      .from("product_images")
+      .select("url, sort_order")
+      .eq("product_id", productId)
+      .order("sort_order", { ascending: true })
+      .limit(1);
+    const newCover = galleryRows?.[0]?.url ?? null;
 
     const price = parseInt(
       (formData.get("price") as string).replace(/\./g, "").replace(",", ""),
@@ -130,7 +200,7 @@ export async function updateProduct(
       glyph: string;
       color: string;
       is_active: boolean;
-      image_url?: string;
+      image_url: string | null;
     };
 
     const updates: ProductUpdate = {
@@ -142,11 +212,8 @@ export async function updateProduct(
       glyph: (formData.get("glyph") as string) || "shirt",
       color: (formData.get("color") as string) || "#1E7A3D",
       is_active: formData.get("isActive") !== "false",
+      image_url: newCover,
     };
-
-    if (imageUrl !== undefined) {
-      updates.image_url = imageUrl;
-    }
 
     const { error } = await supabase
       .from("products")

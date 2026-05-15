@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ProductDetail } from "@/components/storefront/ProductDetail";
 import { StoreHeader } from "@/components/StoreHeader";
-import { getProduct } from "@/lib/queries";
+import { getProductWithImages } from "@/lib/queries";
 
 // Dynamic route — products are served from DB, no static params.
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ export default async function ProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = await getProduct(id);
+  const product = await getProductWithImages(id);
   if (!product) notFound();
 
   return (

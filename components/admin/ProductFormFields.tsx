@@ -3,26 +3,55 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon, ProductGlyph } from "@/components/icons";
-import { createProduct } from "@/lib/actions/products";
-import type { GlyphKind } from "@/lib/types";
+import { createProduct, updateProduct } from "@/lib/actions/products";
+import { compressImage } from "@/lib/imageCompress";
+import type { GlyphKind, Product } from "@/lib/types";
+import type { ProductImageRow } from "@/lib/queries";
 
 const CATEGORIES = ["Camisetas", "Abrigos", "Accesorios"];
 const GLYPHS: GlyphKind[] = ["shirt", "hoodie", "cap", "scarf", "stickers", "thermos", "longsleeve"];
 
-export function ProductFormFields() {
+interface NewImageEntry {
+  file: File;
+  previewUrl: string;
+}
+
+interface Props {
+  editProduct?: Product | null;
+  editImages?: ProductImageRow[];
+}
+
+export function ProductFormFields({ editProduct, editImages = [] }: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const isEdit = !!editProduct;
 
-  const [name, setName] = useState("");
-  const [desc, setDesc] = useState("");
-  const [price, setPrice] = useState("");
-  const [stock, setStock] = useState("");
-  const [category, setCategory] = useState("Camisetas");
-  const [glyph, setGlyph] = useState<GlyphKind>("shirt");
-  const [color, setColor] = useState("#1E7A3D");
-  const [published, setPublished] = useState(true);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // Form fields — pre-populate when editing
+  const [name, setName] = useState(editProduct?.name ?? "");
+  const [desc, setDesc] = useState(editProduct?.desc ?? "");
+  const [price, setPrice] = useState(
+    editProduct ? String(editProduct.price) : ""
+  );
+  const [stock, setStock] = useState(
+    editProduct ? String(editProduct.stock) : ""
+  );
+  const [category, setCategory] = useState(
+    editProduct?.tags[0]
+      ? editProduct.tags[0].charAt(0).toUpperCase() + editProduct.tags[0].slice(1)
+      : "Camisetas"
+  );
+  const [glyph, setGlyph] = useState<GlyphKind>(editProduct?.glyph ?? "shirt");
+  const [color, setColor] = useState(editProduct?.color ?? "#1E7A3D");
+  const [published, setPublished] = useState(
+    editProduct ? editProduct.status !== "out" : true
+  );
+
+  // Gallery state
+  // kept = existing images we're keeping (in their order)
+  const [keptImages, setKeptImages] = useState<ProductImageRow[]>(editImages);
+  // new = new files added by the user (not yet saved)
+  const [newImages, setNewImages] = useState<NewImageEntry[]>([]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<null | "draft" | "published">(null);
@@ -39,13 +68,55 @@ export function ProductFormFields() {
     return e;
   }
 
-  function onImageFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setImageFile(f);
-    const url = URL.createObjectURL(f);
-    setImagePreview(url);
+  async function onImageFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    // Reset input so the same file can be selected again
+    e.target.value = "";
+
+    const entries: NewImageEntry[] = [];
+    for (const f of files) {
+      const compressed = await compressImage(f);
+      const previewUrl = URL.createObjectURL(compressed);
+      entries.push({ file: compressed, previewUrl });
+    }
+    setNewImages((prev) => [...prev, ...entries]);
   }
+
+  function removeKept(id: string) {
+    setKeptImages((prev) => prev.filter((img) => img.id !== id));
+  }
+
+  function removeNew(idx: number) {
+    setNewImages((prev) => {
+      const copy = [...prev];
+      URL.revokeObjectURL(copy[idx].previewUrl);
+      copy.splice(idx, 1);
+      return copy;
+    });
+  }
+
+  function moveKept(idx: number, dir: -1 | 1) {
+    setKeptImages((prev) => {
+      const copy = [...prev];
+      const target = idx + dir;
+      if (target < 0 || target >= copy.length) return prev;
+      [copy[idx], copy[target]] = [copy[target], copy[idx]];
+      return copy;
+    });
+  }
+
+  function moveNew(idx: number, dir: -1 | 1) {
+    setNewImages((prev) => {
+      const copy = [...prev];
+      const target = idx + dir;
+      if (target < 0 || target >= copy.length) return prev;
+      [copy[idx], copy[target]] = [copy[target], copy[idx]];
+      return copy;
+    });
+  }
+
+  const totalImages = keptImages.length + newImages.length;
 
   async function handleSave(mode: "draft" | "published") {
     const e = validate();
@@ -65,15 +136,27 @@ export function ProductFormFields() {
     formData.set("glyph", glyph);
     formData.set("color", color);
     formData.set("isActive", mode === "published" ? "true" : "false");
-    if (imageFile) formData.set("imageFile", imageFile);
 
-    const result = await createProduct(formData);
+    // Append new image files
+    for (const entry of newImages) {
+      formData.append("imageFiles", entry.file);
+    }
+
+    let result: { ok: boolean; message?: string; id?: string };
+
+    if (isEdit && editProduct) {
+      // Include IDs of kept images in desired order
+      formData.set("keepImageIds", JSON.stringify(keptImages.map((img) => img.id)));
+      result = await updateProduct(editProduct.id, formData);
+    } else {
+      result = await createProduct(formData);
+    }
 
     if (result.ok) {
       setSaved(mode);
       setTimeout(() => router.push("/admin/productos"), 1200);
     } else {
-      setErrors({ general: result.message });
+      setErrors({ general: (result as { ok: false; message: string }).message });
     }
     setSaving(false);
   }
@@ -263,7 +346,7 @@ export function ProductFormFields() {
               }}
             >
               <Icon name="check" size={14} color="var(--accent-ink)" stroke={2.2} />
-              {saved === "draft" ? "Borrador guardado" : "Producto publicado"}
+              {saved === "draft" ? "Borrador guardado" : isEdit ? "Producto actualizado" : "Producto publicado"}
             </div>
           )}
           <button
@@ -280,13 +363,14 @@ export function ProductFormFields() {
             onClick={() => handleSave("published")}
             disabled={saving}
           >
-            {saving ? "Publicando…" : "Publicar producto"}
+            {saving ? "Publicando…" : isEdit ? "Actualizar producto" : "Publicar producto"}
           </button>
         </div>
       </div>
 
-      {/* Right: image + visibility — floats to top on mobile */}
+      {/* Right: gallery + visibility */}
       <div className="admin-product-form-sidebar" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Multi-image gallery manager */}
         <div
           style={{
             background: "var(--surface)",
@@ -295,8 +379,57 @@ export function ProductFormFields() {
             padding: 20,
           }}
         >
-          <div style={{ fontSize: 14, fontWeight: 700 }}>Imagen del producto</div>
-          <div style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
+            Fotos del producto
+          </div>
+
+          {/* Grid of thumbnails */}
+          {totalImages > 0 && (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 8,
+                marginBottom: 12,
+              }}
+            >
+              {/* Kept images */}
+              {keptImages.map((img, idx) => (
+                <GalleryThumb
+                  key={img.id}
+                  src={img.url}
+                  label={idx === 0 ? "Portada" : undefined}
+                  onRemove={() => removeKept(img.id)}
+                  onMoveUp={idx > 0 ? () => moveKept(idx, -1) : undefined}
+                  onMoveDown={
+                    idx < keptImages.length - 1 || newImages.length > 0
+                      ? () => moveKept(idx, 1)
+                      : undefined
+                  }
+                />
+              ))}
+
+              {/* New images */}
+              {newImages.map((entry, idx) => (
+                <GalleryThumb
+                  key={entry.previewUrl}
+                  src={entry.previewUrl}
+                  label={keptImages.length === 0 && idx === 0 ? "Portada" : undefined}
+                  isNew
+                  onRemove={() => removeNew(idx)}
+                  onMoveUp={
+                    idx > 0 || keptImages.length > 0
+                      ? () => moveNew(idx, -1)
+                      : undefined
+                  }
+                  onMoveDown={idx < newImages.length - 1 ? () => moveNew(idx, 1) : undefined}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Empty state / glyph preview */}
+          {totalImages === 0 && (
             <div
               style={{
                 aspectRatio: "1 / 1",
@@ -305,75 +438,43 @@ export function ProductFormFields() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                position: "relative",
-                overflow: "hidden",
+                marginBottom: 10,
               }}
             >
-              {imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              ) : (
-                <ProductGlyph kind={glyph} color={color} bg={false} />
-              )}
-              <div
-                style={{
-                  position: "absolute",
-                  top: 8,
-                  right: 8,
-                  display: "flex",
-                  gap: 4,
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: "var(--r-sm)",
-                    border: "none",
-                    background: "rgba(29, 33, 37, 0.85)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                  }}
-                >
-                  <Icon name="edit" size={14} color="var(--ink)" />
-                </button>
-              </div>
+              <ProductGlyph kind={glyph} color={color} bg={false} />
             </div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              onChange={onImageFile}
-              style={{ display: "none" }}
-            />
-            <button
-              type="button"
-              className="lds-btn lds-btn-secondary lds-btn-sm lds-btn-block"
-              style={{ marginTop: 10 }}
-              onClick={() => fileRef.current?.click()}
-            >
-              <Icon name="upload" size={15} color="var(--ink-2)" />
-              {imageFile ? "Cambiar imagen" : "Subir imagen"}
-            </button>
-            <div
-              style={{
-                fontSize: 11,
-                color: "var(--ink-3)",
-                marginTop: 8,
-                textAlign: "center",
-              }}
-            >
-              JPG o PNG. Cuadrada, mínimo 800 × 800 px.
-            </div>
+          )}
+
+          {/* Add photos button */}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={onImageFiles}
+            style={{ display: "none" }}
+          />
+          <button
+            type="button"
+            className="lds-btn lds-btn-secondary lds-btn-sm lds-btn-block"
+            onClick={() => fileRef.current?.click()}
+          >
+            <Icon name="upload" size={15} color="var(--ink-2)" />
+            Agregar fotos
+          </button>
+          <div
+            style={{
+              fontSize: 11,
+              color: "var(--ink-3)",
+              marginTop: 8,
+              textAlign: "center",
+            }}
+          >
+            JPG o PNG. La primera foto es la portada.
           </div>
         </div>
+
+        {/* Visibility */}
         <div
           style={{
             background: "var(--surface)",
@@ -429,6 +530,143 @@ export function ProductFormFields() {
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Gallery thumbnail ─────────────────────────────────────────────────────────
+
+function GalleryThumb({
+  src,
+  label,
+  isNew,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+}: {
+  src: string;
+  label?: string;
+  isNew?: boolean;
+  onRemove: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+}) {
+  return (
+    <div
+      style={{
+        position: "relative",
+        aspectRatio: "1 / 1",
+        borderRadius: "var(--r-sm)",
+        overflow: "hidden",
+        background: "var(--surface-alt)",
+        border: isNew ? "1.5px dashed var(--accent)" : "1px solid var(--line)",
+      }}
+    >
+      <img
+        src={src}
+        alt=""
+        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+      />
+
+      {/* Label badge */}
+      {label && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 4,
+            left: 4,
+            background: "rgba(0,0,0,0.65)",
+            color: "#fff",
+            fontSize: 9,
+            fontWeight: 700,
+            padding: "2px 5px",
+            borderRadius: 3,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+          }}
+        >
+          {label}
+        </div>
+      )}
+
+      {/* Remove button */}
+      <button
+        type="button"
+        onClick={onRemove}
+        title="Quitar foto"
+        style={{
+          position: "absolute",
+          top: 3,
+          right: 3,
+          width: 20,
+          height: 20,
+          borderRadius: "50%",
+          background: "rgba(0,0,0,0.65)",
+          border: "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          padding: 0,
+        }}
+      >
+        <Icon name="close" size={10} color="#fff" stroke={2.4} />
+      </button>
+
+      {/* Move up / down */}
+      <div
+        style={{
+          position: "absolute",
+          top: 3,
+          left: 3,
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+        }}
+      >
+        {onMoveUp && (
+          <button
+            type="button"
+            onClick={onMoveUp}
+            title="Mover izquierda"
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: 3,
+              background: "rgba(0,0,0,0.55)",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            <Icon name="arrowup" size={10} color="#fff" stroke={2} />
+          </button>
+        )}
+        {onMoveDown && (
+          <button
+            type="button"
+            onClick={onMoveDown}
+            title="Mover derecha"
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: 3,
+              background: "rgba(0,0,0,0.55)",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            <Icon name="arrowdown" size={10} color="#fff" stroke={2} />
+          </button>
+        )}
       </div>
     </div>
   );

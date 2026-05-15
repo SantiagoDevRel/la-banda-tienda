@@ -115,6 +115,51 @@ export async function getProduct(id: string): Promise<Product | null> {
   return dbProductToProduct(data);
 }
 
+/** Product with full gallery from product_images (sorted by sort_order). */
+export async function getProductWithImages(id: string): Promise<Product | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("*, product_images(url, sort_order)")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) return null;
+
+  const base = dbProductToProduct(data);
+
+  // Sort gallery client-side and extract URLs
+  type GalleryRow = { url: string; sort_order: number };
+  const rawGallery = (data.product_images as GalleryRow[] | null) ?? [];
+  const gallery = rawGallery
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((g) => g.url);
+
+  return { ...base, gallery };
+}
+
+export interface ProductImageRow {
+  id: string;
+  url: string;
+  sort_order: number;
+}
+
+/** Returns existing gallery rows for the admin edit form. */
+export async function getProductImagesForEdit(productId: string): Promise<ProductImageRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("product_images")
+    .select("id, url, sort_order")
+    .eq("product_id", productId)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("[getProductImagesForEdit]", error.message);
+    return [];
+  }
+  return (data ?? []) as ProductImageRow[];
+}
+
 // ── Settings ────────────────────────────────────────────────────────────────
 
 export async function getStoreSettings() {

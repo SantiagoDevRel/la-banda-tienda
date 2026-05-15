@@ -51,6 +51,7 @@ const ICON_PATHS = {
   check: <path d="M5 13 L 10 18 L 19 7" />,
   chevdown: <path d="M6 9 L 12 15 L 18 9" />,
   chevright: <path d="M9 6 L 15 12 L 9 18" />,
+  chevleft: <path d="M15 6 L 9 12 L 15 18" />,
   search: (
     <g>
       <circle cx="11" cy="11" r="6" />

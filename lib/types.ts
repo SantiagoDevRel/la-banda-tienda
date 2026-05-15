@@ -22,8 +22,10 @@ export interface Product {
   glyph: GlyphKind;
   desc: string;
   tags: string[];
-  /** URL de la foto real. Mientras sea null se usa el glyph placeholder. */
+  /** URL de la foto real (cover). Mientras sea null se usa el glyph placeholder. */
   image?: string | null;
+  /** Galería completa de fotos (URLs en sort_order). Poblado por getProductWithImages. */
+  gallery?: string[];
   /** true = producto de muestra, aún sin foto/nombre definitivo. */
   placeholder?: boolean;
 }
