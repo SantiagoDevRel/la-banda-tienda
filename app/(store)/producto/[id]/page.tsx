@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
 import { ProductDetail } from "@/components/storefront/ProductDetail";
 import { StoreHeader } from "@/components/StoreHeader";
-import { getProduct, PRODUCTS } from "@/lib/data";
+import { getProduct } from "@/lib/queries";
 
-export function generateStaticParams() {
-  return PRODUCTS.map((p) => ({ id: p.id }));
-}
+// Dynamic route — products are served from DB, no static params.
+export const dynamic = "force-dynamic";
 
 // 03 · Detalle de producto
 export default async function ProductPage({
@@ -14,7 +13,7 @@ export default async function ProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = getProduct(id);
+  const product = await getProduct(id);
   if (!product) notFound();
 
   return (

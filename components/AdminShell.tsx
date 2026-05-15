@@ -1,9 +1,13 @@
 // Admin dashboard shell — sidebar + topbar.
 // Ported from the Claude Design handoff (_design-ref/project/components.jsx).
 
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { Icon, Logo, type IconName } from "./icons";
+import { createClient } from "@/lib/supabase/client";
 
 const NAV: { id: string; label: string; icon: IconName; href: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: "home", href: "/admin" },
@@ -27,6 +31,15 @@ export function AdminShell({
   page?: AdminPage;
   children: ReactNode;
 }) {
+  const router = useRouter();
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/admin/login");
+    router.refresh();
+  }
+
   return (
     <div className="lds-screen" style={{ display: "flex", background: "var(--bg)" }}>
       {/* Sidebar */}
@@ -129,9 +142,22 @@ export function AdminShell({
               </div>
               <div style={{ fontSize: 11, color: "var(--ink-3)" }}>Admin</div>
             </div>
-            <Link href="/admin/login" aria-label="Cerrar sesión">
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Cerrar sesión"
+              style={{
+                background: "none",
+                border: "none",
+                padding: 4,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <Icon name="logout" size={15} color="var(--ink-3)" />
-            </Link>
+            </button>
           </div>
         </div>
       </aside>

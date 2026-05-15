@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ORDERS, formatCOP } from "@/lib/data";
+import { formatCOP } from "@/lib/data";
 import { OrderStatusBadge } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import type { OrderStatus } from "@/lib/types";
+import type { OrderRow } from "@/lib/queries";
 
 type FilterId = "all" | OrderStatus;
 
@@ -17,19 +18,23 @@ const FILTERS: { id: FilterId; label: string }[] = [
   { id: "cancel", label: "Canceladas" },
 ];
 
-export function OrdersTable() {
+interface OrdersTableProps {
+  orders: OrderRow[];
+}
+
+export function OrdersTable({ orders }: OrdersTableProps) {
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
   const [search, setSearch] = useState("");
 
   const counts: Record<FilterId, number> = {
-    all: ORDERS.length,
-    pending: ORDERS.filter((o) => o.status === "pending").length,
-    done: ORDERS.filter((o) => o.status === "done").length,
-    shipped: ORDERS.filter((o) => o.status === "shipped").length,
-    cancel: ORDERS.filter((o) => o.status === "cancel").length,
+    all: orders.length,
+    pending: orders.filter((o) => o.status === "pending").length,
+    done: orders.filter((o) => o.status === "done").length,
+    shipped: orders.filter((o) => o.status === "shipped").length,
+    cancel: orders.filter((o) => o.status === "cancel").length,
   };
 
-  const filtered = ORDERS.filter((o) => {
+  const filtered = orders.filter((o) => {
     const matchesFilter = activeFilter === "all" || o.status === activeFilter;
     const q = search.toLowerCase();
     const matchesSearch =
@@ -146,7 +151,7 @@ export function OrdersTable() {
           </thead>
           <tbody>
             {filtered.map((o) => (
-              <tr key={o.id}>
+              <tr key={o.orderId}>
                 <td style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
                   #{o.id}
                 </td>
@@ -171,7 +176,7 @@ export function OrdersTable() {
                 </td>
                 <td style={{ color: "var(--ink-3)", fontSize: 13 }}>{o.date}</td>
                 <td style={{ textAlign: "right" }}>
-                  <Link href={`/admin/ordenes/${o.id}`}>
+                  <Link href={`/admin/ordenes/${o.orderId}`}>
                     <Icon name="chevright" size={14} color="var(--ink-3)" />
                   </Link>
                 </td>

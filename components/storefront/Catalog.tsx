@@ -1,19 +1,24 @@
 "use client";
 
-// Catalog grid + category chips. Filters the (mock) product list client-side.
+// Catalog grid + category chips. Filters the product list client-side.
 
 import { useState } from "react";
 import { Icon } from "@/components/icons";
-import { CATEGORIES, PRODUCTS } from "@/lib/data";
+import { CATEGORIES } from "@/lib/data";
 import { ProductCard } from "./ProductCard";
+import type { Product } from "@/lib/types";
 
-export function Catalog() {
+interface CatalogProps {
+  products: Product[];
+}
+
+export function Catalog({ products }: CatalogProps) {
   const [cat, setCat] = useState("Todos");
 
   const filtered =
     cat === "Todos"
-      ? PRODUCTS
-      : PRODUCTS.filter((p) => p.tags.includes(cat.toLowerCase()));
+      ? products
+      : products.filter((p) => p.tags.includes(cat.toLowerCase()));
 
   return (
     <>

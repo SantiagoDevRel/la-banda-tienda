@@ -3,15 +3,19 @@ import Link from "next/link";
 import { AdminShell } from "@/components/AdminShell";
 import { Icon, ProductGlyph } from "@/components/icons";
 import { StockBadge } from "@/components/ui";
-import { PRODUCTS, formatCOP } from "@/lib/data";
+import { formatCOP } from "@/lib/data";
+import { getAllProducts } from "@/lib/queries";
+import { DeleteProductButton } from "@/components/admin/DeleteProductButton";
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const products = await getAllProducts();
+
   return (
     <AdminShell
       section="products"
       page={{
         title: "Productos",
-        subtitle: `${PRODUCTS.length} referencias en catálogo`,
+        subtitle: `${products.length} referencias en catálogo`,
         action: (
           <div style={{ display: "flex", gap: 10 }}>
             <button className="lds-btn lds-btn-secondary lds-btn-sm">
@@ -81,7 +85,7 @@ export default function ProductsPage() {
             </tr>
           </thead>
           <tbody>
-            {PRODUCTS.map((p) => (
+            {products.map((p) => (
               <tr key={p.id}>
                 <td style={{ paddingRight: 0 }}>
                   <div
@@ -93,17 +97,40 @@ export default function ProductsPage() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      overflow: "hidden",
                     }}
                   >
-                    <ProductGlyph
-                      kind={p.glyph}
-                      color={p.color}
-                      bare
-                      style={{ width: 30, height: 30 }}
-                    />
+                    {p.image ? (
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        style={{ width: 40, height: 40, objectFit: "cover" }}
+                      />
+                    ) : (
+                      <ProductGlyph
+                        kind={p.glyph}
+                        color={p.color}
+                        bare
+                        style={{ width: 30, height: 30 }}
+                      />
+                    )}
                   </div>
                 </td>
-                <td style={{ fontWeight: 600 }}>{p.name}</td>
+                <td style={{ fontWeight: 600 }}>
+                  {p.name}
+                  {!p.placeholder && !p.image && (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        fontSize: 10,
+                        color: "var(--ink-3)",
+                        fontWeight: 400,
+                      }}
+                    >
+                      (sin foto)
+                    </span>
+                  )}
+                </td>
                 <td
                   style={{
                     color: "var(--ink-2)",
@@ -158,26 +185,26 @@ export default function ProductsPage() {
                     >
                       <Icon name="edit" size={14} color="var(--ink-2)" />
                     </Link>
-                    <button
-                      style={{
-                        width: 30,
-                        height: 30,
-                        borderRadius: "var(--r-sm)",
-                        border: "1px solid var(--line)",
-                        background: "var(--surface)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                      }}
-                      title="Eliminar"
-                    >
-                      <Icon name="trash" size={14} color="#B91C1C" />
-                    </button>
+                    <DeleteProductButton productId={p.id} />
                   </div>
                 </td>
               </tr>
             ))}
+            {products.length === 0 && (
+              <tr>
+                <td
+                  colSpan={7}
+                  style={{
+                    textAlign: "center",
+                    color: "var(--ink-3)",
+                    padding: "32px 0",
+                    fontSize: 13,
+                  }}
+                >
+                  No hay productos. Creá el primero.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

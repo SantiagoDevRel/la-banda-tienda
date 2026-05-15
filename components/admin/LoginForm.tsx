@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons";
+import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   function validate() {
     const e: typeof errors = {};
@@ -18,7 +21,7 @@ export function LoginForm() {
     return e;
   }
 
-  function handleSubmit(ev: React.FormEvent) {
+  async function handleSubmit(ev: React.FormEvent) {
     ev.preventDefault();
     const e = validate();
     if (Object.keys(e).length) {
@@ -27,11 +30,21 @@ export function LoginForm() {
     }
     setErrors({});
     setLoading(true);
-    // Simulate auth — no backend yet
-    setTimeout(() => {
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (error) {
+      setErrors({ general: "Correo o contraseña incorrectos." });
       setLoading(false);
-      window.location.href = "/admin";
-    }, 800);
+      return;
+    }
+
+    router.push("/admin");
+    router.refresh();
   }
 
   return (
@@ -40,6 +53,14 @@ export function LoginForm() {
       style={{ marginTop: 28, display: "flex", flexDirection: "column", gap: 14 }}
       noValidate
     >
+      {errors.general && (
+        <div
+          className="lds-error"
+          style={{ padding: "10px 14px", borderRadius: "var(--r-md)", fontSize: 13 }}
+        >
+          {errors.general}
+        </div>
+      )}
       <div>
         <label className="lds-label">Correo electrónico</label>
         <input

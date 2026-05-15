@@ -4,25 +4,36 @@ import { useState } from "react";
 import { Icon } from "@/components/icons";
 import { OrderStatusBadge } from "@/components/ui";
 import type { OrderStatus } from "@/lib/types";
+import { updateOrderStatus } from "@/lib/actions/admin";
 
-export function OrderActions({ initialStatus }: { initialStatus: OrderStatus }) {
+export function OrderActions({
+  initialStatus,
+  orderId,
+}: {
+  initialStatus: OrderStatus;
+  orderId: string;
+}) {
   const [status, setStatus] = useState<OrderStatus>(initialStatus);
   const [notify, setNotify] = useState(true);
   const [confirming, setConfirming] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  function markDone() {
-    setStatus("done");
-    setConfirming(false);
-  }
-
-  function markShipped() {
-    setStatus("shipped");
-    setConfirming(false);
-  }
-
-  function cancel() {
-    setStatus("cancel");
-    setConfirming(false);
+  async function doUpdate(newStatus: OrderStatus) {
+    setLoading(true);
+    setError("");
+    const result = await updateOrderStatus(
+      orderId,
+      newStatus,
+      newStatus === "shipped" ? notify : false,
+    );
+    if (result.ok) {
+      setStatus(newStatus);
+      setConfirming(false);
+    } else {
+      setError(result.message);
+    }
+    setLoading(false);
   }
 
   return (
@@ -46,6 +57,15 @@ export function OrderActions({ initialStatus }: { initialStatus: OrderStatus }) 
         <OrderStatusBadge status={status} />
       </div>
 
+      {error && (
+        <div
+          className="lds-error"
+          style={{ marginBottom: 10, fontSize: 12, padding: "8px 10px" }}
+        >
+          {error}
+        </div>
+      )}
+
       {confirming ? (
         <div
           style={{
@@ -60,18 +80,20 @@ export function OrderActions({ initialStatus }: { initialStatus: OrderStatus }) 
             ¿Cancelar este pedido?
           </div>
           <div style={{ fontSize: 12, color: "#b91c1c", marginTop: 4 }}>
-            Esta acción no se puede deshacer.
+            Esta acción restaura el stock de los productos.
           </div>
           <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
             <button
               className="lds-btn lds-btn-danger lds-btn-sm"
-              onClick={cancel}
+              onClick={() => doUpdate("cancel")}
+              disabled={loading}
             >
-              Sí, cancelar
+              {loading ? "Cancelando…" : "Sí, cancelar"}
             </button>
             <button
               className="lds-btn lds-btn-ghost lds-btn-sm"
               onClick={() => setConfirming(false)}
+              disabled={loading}
             >
               Volver
             </button>
@@ -81,19 +103,19 @@ export function OrderActions({ initialStatus }: { initialStatus: OrderStatus }) 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <button
             className="lds-btn lds-btn-primary lds-btn-block"
-            onClick={markDone}
-            disabled={status === "done"}
+            onClick={() => doUpdate("done")}
+            disabled={status === "done" || loading}
           >
             <Icon name="check" size={16} color="white" stroke={2.2} />
-            Marcar finalizada
+            {loading ? "Guardando…" : "Marcar finalizada"}
           </button>
           <button
             className="lds-btn lds-btn-secondary lds-btn-block"
-            onClick={markShipped}
-            disabled={status === "shipped" || status === "done"}
+            onClick={() => doUpdate("shipped")}
+            disabled={status === "shipped" || status === "done" || loading}
           >
             <Icon name="box" size={16} color="var(--ink-2)" />
-            Marcar enviado
+            {loading ? "Guardando…" : "Marcar enviado"}
           </button>
           <label
             style={{
@@ -131,7 +153,7 @@ export function OrderActions({ initialStatus }: { initialStatus: OrderStatus }) 
           <button
             className="lds-btn lds-btn-danger lds-btn-block"
             onClick={() => setConfirming(true)}
-            disabled={status === "cancel"}
+            disabled={status === "cancel" || loading}
           >
             Cancelar pedido
           </button>

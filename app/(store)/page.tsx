@@ -1,8 +1,11 @@
 import { Catalog } from "@/components/storefront/Catalog";
 import { StoreHeader } from "@/components/StoreHeader";
+import { getActiveProducts } from "@/lib/queries";
 
 // 01 · Catálogo — home / storefront landing.
-export default function CatalogPage() {
+export default async function CatalogPage() {
+  const products = await getActiveProducts();
+
   return (
     <div className="store-screen">
       <StoreHeader />
@@ -14,7 +17,7 @@ export default function CatalogPage() {
             <br />a donde vayas.
           </h1>
         </div>
-        <Catalog />
+        <Catalog products={products} />
       </div>
     </div>
   );

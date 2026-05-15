@@ -1,8 +1,8 @@
 "use client";
 
 // Tienda La Banda — client-side cart (context + localStorage).
-// Backend-free for now: the storefront flow is fully interactive but state
-// lives in the browser. Swaps to server/Supabase orders in the backend phase.
+// Products are fetched server-side and injected via <CartProvider products={...}>.
+// The cart itself only stores lines (productId + qty + size) in localStorage.
 
 import {
   createContext,
@@ -12,12 +12,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import {
-  CART_SEED,
-  FREE_SHIPPING_MIN,
-  SHIPPING_COST,
-  getProduct,
-} from "./data";
+import { CART_SEED } from "./data";
 import type { CartLine, Product } from "./types";
 
 const STORAGE_KEY = "lds-cart-v1";
@@ -33,6 +28,8 @@ interface CartContextValue {
   subtotal: number;
   shipping: number;
   total: number;
+  shippingCost: number;
+  freeShippingMin: number;
   ready: boolean;
   add: (productId: string, qty?: number, size?: string) => void;
   setQty: (productId: string, qty: number, size?: string) => void;
@@ -45,9 +42,35 @@ const CartContext = createContext<CartContextValue | null>(null);
 const lineKey = (productId: string, size?: string) =>
   `${productId}::${size ?? ""}`;
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+interface CartProviderProps {
+  children: React.ReactNode;
+  /** Active products from the server — used to resolve cart lines into CartItems. */
+  products?: Product[];
+  shippingCost?: number;
+  freeShippingMin?: number;
+}
+
+export function CartProvider({
+  children,
+  products = [],
+  shippingCost = 12000,
+  freeShippingMin = 200000,
+}: CartProviderProps) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [ready, setReady] = useState(false);
+
+  // Build a lookup map from the products prop.
+  const productMap = useMemo(() => {
+    const map = new Map<string, Product>();
+    products.forEach((p) => map.set(p.id, p));
+    return map;
+  }, [products]);
+
+  // Helper used inside setLines callbacks (needs to be stable).
+  const getProductStock = useCallback(
+    (productId: string) => productMap.get(productId)?.stock ?? Infinity,
+    [productMap],
+  );
 
   // Hydrate from localStorage (fall back to the demo seed on first visit).
   useEffect(() => {
@@ -79,8 +102,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setLines((prev) => {
         const key = lineKey(productId, size);
         const existing = prev.find((l) => lineKey(l.productId, l.size) === key);
-        const product = getProduct(productId);
-        const cap = product ? product.stock : Infinity;
+        const cap = getProductStock(productId);
         if (existing) {
           return prev.map((l) =>
             lineKey(l.productId, l.size) === key
@@ -91,7 +113,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return [...prev, { productId, qty: Math.min(cap, qty), size }];
       });
     },
-    [],
+    [getProductStock],
   );
 
   const setQty = useCallback(
@@ -119,7 +141,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<CartContextValue>(() => {
     const items: CartItem[] = lines
       .map((l) => {
-        const product = getProduct(l.productId);
+        const product = productMap.get(l.productId);
         if (!product) return null;
         return { ...l, product, lineTotal: product.price * l.qty };
       })
@@ -128,13 +150,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const subtotal = items.reduce((s, it) => s + it.lineTotal, 0);
     const count = items.reduce((s, it) => s + it.qty, 0);
     const shipping =
-      subtotal === 0 || subtotal >= FREE_SHIPPING_MIN ? 0 : SHIPPING_COST;
+      subtotal === 0 || subtotal >= freeShippingMin ? 0 : shippingCost;
 
     return {
       items,
       count,
       subtotal,
       shipping,
+      shippingCost,
+      freeShippingMin,
       total: subtotal + shipping,
       ready,
       add,
@@ -142,7 +166,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       remove,
       clear,
     };
-  }, [lines, ready, add, setQty, remove, clear]);
+  }, [lines, productMap, ready, shippingCost, freeShippingMin, add, setQty, remove, clear]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

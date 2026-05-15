@@ -1,20 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Icon, ProductGlyph } from "@/components/icons";
+import { createProduct } from "@/lib/actions/products";
+import type { GlyphKind } from "@/lib/types";
 
 const CATEGORIES = ["Camisetas", "Abrigos", "Accesorios"];
+const GLYPHS: GlyphKind[] = ["shirt", "hoodie", "cap", "scarf", "stickers", "thermos", "longsleeve"];
 
 export function ProductFormFields() {
-  const [name, setName] = useState("Camiseta Manga Larga Entrenamiento");
-  const [desc, setDesc] = useState(
-    "Camiseta manga larga térmica para entrenamiento, tela elástica con tecnología antitranspirante. Talles S a XXL, estampado en cuello y manga."
-  );
-  const [price, setPrice] = useState("105.000");
-  const [stock, setStock] = useState("24");
+  const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const [price, setPrice] = useState("");
+  const [stock, setStock] = useState("");
   const [category, setCategory] = useState("Camisetas");
+  const [glyph, setGlyph] = useState<GlyphKind>("shirt");
+  const [color, setColor] = useState("#1E7A3D");
   const [published, setPublished] = useState(true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<null | "draft" | "published">(null);
 
   function validate() {
@@ -24,18 +34,48 @@ export function ProductFormFields() {
     else if (isNaN(Number(price.replace(/\./g, "").replace(",", "."))))
       e.price = "Ingresá un precio válido.";
     if (!stock.trim()) e.stock = "El stock es obligatorio.";
-    else if (isNaN(Number(stock))) e.stock = "Ingresá un número entero.";
+    else if (isNaN(Number(stock)) || Number(stock) < 0)
+      e.stock = "Ingresá un número entero positivo.";
     return e;
   }
 
-  function handleSave(mode: "draft" | "published") {
+  function onImageFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setImageFile(f);
+    const url = URL.createObjectURL(f);
+    setImagePreview(url);
+  }
+
+  async function handleSave(mode: "draft" | "published") {
     const e = validate();
     if (Object.keys(e).length) {
       setErrors(e);
       return;
     }
     setErrors({});
-    setSaved(mode);
+    setSaving(true);
+
+    const formData = new FormData();
+    formData.set("name", name);
+    formData.set("description", desc);
+    formData.set("price", price);
+    formData.set("stock", stock);
+    formData.set("category", category);
+    formData.set("glyph", glyph);
+    formData.set("color", color);
+    formData.set("isActive", mode === "published" ? "true" : "false");
+    if (imageFile) formData.set("imageFile", imageFile);
+
+    const result = await createProduct(formData);
+
+    if (result.ok) {
+      setSaved(mode);
+      setTimeout(() => router.push("/admin/productos"), 1200);
+    } else {
+      setErrors({ general: result.message });
+    }
+    setSaving(false);
   }
 
   return (
@@ -66,6 +106,11 @@ export function ProductFormFields() {
               gap: 14,
             }}
           >
+            {errors.general && (
+              <div className="lds-error" style={{ fontSize: 12, padding: "8px 10px" }}>
+                {errors.general}
+              </div>
+            )}
             <div>
               <label className="lds-label">Nombre del producto</label>
               <input
@@ -73,6 +118,7 @@ export function ProductFormFields() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 aria-invalid={!!errors.name}
+                placeholder="Ej: Camiseta Manga Larga"
               />
               {errors.name && (
                 <div className="lds-error" style={{ marginTop: 4, fontSize: 12 }}>
@@ -87,6 +133,7 @@ export function ProductFormFields() {
                 rows={4}
                 value={desc}
                 onChange={(e) => setDesc(e.target.value)}
+                placeholder="Describí el producto: material, tallas, detalles."
               />
             </div>
             <div
@@ -103,6 +150,7 @@ export function ProductFormFields() {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   aria-invalid={!!errors.price}
+                  placeholder="105.000"
                 />
                 {errors.price && (
                   <div
@@ -120,6 +168,7 @@ export function ProductFormFields() {
                   value={stock}
                   onChange={(e) => setStock(e.target.value)}
                   aria-invalid={!!errors.stock}
+                  placeholder="24"
                 />
                 {errors.stock && (
                   <div
@@ -162,10 +211,55 @@ export function ProductFormFields() {
                 })}
               </div>
             </div>
+            <div>
+              <label className="lds-label">Ícono (glyph)</label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {GLYPHS.map((g) => {
+                  const active = glyph === g;
+                  return (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setGlyph(g)}
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: "var(--r-sm)",
+                        border: active ? "2px solid var(--accent)" : "1px solid var(--line)",
+                        background: active ? "var(--accent-tint)" : "var(--surface-alt)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                      title={g}
+                    >
+                      <ProductGlyph kind={g} color={color} bare style={{ width: 28, height: 28 }} />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <label className="lds-label">Color del ícono</label>
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                style={{
+                  width: 40,
+                  height: 32,
+                  padding: 2,
+                  border: "1px solid var(--line)",
+                  borderRadius: "var(--r-sm)",
+                  cursor: "pointer",
+                }}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Action buttons (bottom of left column) */}
+        {/* Action buttons */}
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
           {saved && (
             <div
@@ -189,15 +283,17 @@ export function ProductFormFields() {
             type="button"
             className="lds-btn lds-btn-secondary lds-btn-sm"
             onClick={() => handleSave("draft")}
+            disabled={saving}
           >
-            Guardar borrador
+            {saving ? "Guardando…" : "Guardar borrador"}
           </button>
           <button
             type="button"
             className="lds-btn lds-btn-primary lds-btn-sm"
             onClick={() => handleSave("published")}
+            disabled={saving}
           >
-            Publicar producto
+            {saving ? "Publicando…" : "Publicar producto"}
           </button>
         </div>
       </div>
@@ -226,7 +322,15 @@ export function ProductFormFields() {
                 overflow: "hidden",
               }}
             >
-              <ProductGlyph kind="longsleeve" color="#16A34A" bg={false} />
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <ProductGlyph kind={glyph} color={color} bg={false} />
+              )}
               <div
                 style={{
                   position: "absolute",
@@ -238,6 +342,7 @@ export function ProductFormFields() {
               >
                 <button
                   type="button"
+                  onClick={() => fileRef.current?.click()}
                   style={{
                     width: 30,
                     height: 30,
@@ -254,13 +359,21 @@ export function ProductFormFields() {
                 </button>
               </div>
             </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              onChange={onImageFile}
+              style={{ display: "none" }}
+            />
             <button
               type="button"
               className="lds-btn lds-btn-secondary lds-btn-sm lds-btn-block"
               style={{ marginTop: 10 }}
+              onClick={() => fileRef.current?.click()}
             >
               <Icon name="upload" size={15} color="var(--ink-2)" />
-              Cambiar imagen
+              {imageFile ? "Cambiar imagen" : "Subir imagen"}
             </button>
             <div
               style={{

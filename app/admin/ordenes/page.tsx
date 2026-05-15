@@ -2,8 +2,11 @@
 import { AdminShell } from "@/components/AdminShell";
 import { Icon } from "@/components/icons";
 import { OrdersTable } from "@/components/admin/OrdersTable";
+import { getOrders } from "@/lib/queries";
 
-export default function OrdenesPage() {
+export default async function OrdenesPage() {
+  const orders = await getOrders();
+
   return (
     <AdminShell
       section="orders"
@@ -20,7 +23,7 @@ export default function OrdenesPage() {
         ),
       }}
     >
-      <OrdersTable />
+      <OrdersTable orders={orders} />
     </AdminShell>
   );
 }

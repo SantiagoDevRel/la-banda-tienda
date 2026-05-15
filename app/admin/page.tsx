@@ -3,7 +3,8 @@ import Link from "next/link";
 import { AdminShell } from "@/components/AdminShell";
 import { Icon } from "@/components/icons";
 import { OrderStatusBadge } from "@/components/ui";
-import { ORDERS, PRODUCTS, formatCOP } from "@/lib/data";
+import { formatCOP } from "@/lib/data";
+import { getDashboardMetrics, getOrders } from "@/lib/queries";
 import type { ReactNode } from "react";
 
 function MetricCard({
@@ -76,14 +77,11 @@ function MetricCard({
   );
 }
 
-export default function DashboardPage() {
-  const pendingCount = ORDERS.filter((o) => o.status === "pending").length;
-  const lowStock = PRODUCTS.filter(
-    (p) => p.status === "low" || p.status === "out"
-  ).length;
-  const todayOrders = ORDERS.filter((o) => o.date.startsWith("Hoy"));
-  const todayCount = todayOrders.length;
-  const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
+export default async function DashboardPage() {
+  const [metrics, recentOrders] = await Promise.all([
+    getDashboardMetrics(),
+    getOrders(),
+  ]);
 
   const quickActions = [
     {
@@ -95,7 +93,7 @@ export default function DashboardPage() {
     {
       icon: "bag" as const,
       label: "Ver pendientes",
-      sub: `${pendingCount} esperando verificar`,
+      sub: `${metrics.pendingCount} esperando verificar`,
       href: "/admin/ordenes",
     },
     {
@@ -124,7 +122,7 @@ export default function DashboardPage() {
       >
         <MetricCard
           label="Pedidos pendientes"
-          value={pendingCount}
+          value={metrics.pendingCount}
           sub="Necesitan verificación"
           accentBg="var(--status-pending-bg)"
           icon={
@@ -133,21 +131,21 @@ export default function DashboardPage() {
         />
         <MetricCard
           label="Pedidos de hoy"
-          value={todayCount}
-          sub={formatCOP(todayRevenue) + " en ventas"}
+          value={metrics.todayCount}
+          sub={formatCOP(metrics.todayRevenue) + " en ventas"}
           accentBg="var(--accent-tint)"
           icon={<Icon name="bag" size={16} color="var(--accent-ink)" />}
         />
         <MetricCard
           label="Stock bajo"
-          value={lowStock}
+          value={metrics.lowStockCount}
           sub="Productos por reponer"
           accentBg="var(--surface-alt)"
           icon={<Icon name="box" size={16} color="var(--ink-2)" />}
         />
         <MetricCard
           label="Total pedidos"
-          value={ORDERS.length}
+          value={metrics.totalOrders}
           sub="Este mes"
           accentBg="var(--surface-alt)"
           icon={<Icon name="grid" size={16} color="var(--ink-2)" />}
@@ -208,8 +206,8 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {ORDERS.slice(0, 5).map((o) => (
-                <tr key={o.id}>
+              {recentOrders.slice(0, 5).map((o) => (
+                <tr key={o.orderId}>
                   <td
                     style={{
                       fontWeight: 600,
@@ -236,6 +234,21 @@ export default function DashboardPage() {
                   </td>
                 </tr>
               ))}
+              {recentOrders.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    style={{
+                      textAlign: "center",
+                      color: "var(--ink-3)",
+                      padding: "32px 0",
+                      fontSize: 13,
+                    }}
+                  >
+                    No hay pedidos todavía.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
