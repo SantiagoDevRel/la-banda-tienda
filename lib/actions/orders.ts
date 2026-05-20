@@ -3,6 +3,7 @@
 // Tienda La Banda — server action: createOrder
 // Uploads payment screenshot to Supabase Storage, then calls the
 // create_order RPC (atomic: validates stock, snapshots prices, decrements stock).
+// The RPC now accepts p_customer_department and p_delivery_method (9 args total).
 
 import { createClient } from "@/lib/supabase/server";
 import { sendNewOrderEmail } from "@/lib/email";
@@ -20,6 +21,8 @@ export interface OrderCustomer {
   phone: string;
   address: string;
   city: string;
+  department: string;
+  deliveryMethod: "shipping" | "pickup";
 }
 
 export interface CreateOrderResult {
@@ -72,7 +75,7 @@ export async function createOrder(
     };
   }
 
-  // 2. Call the create_order RPC
+  // 2. Call the create_order RPC (9-arg signature)
   const rpcItems = cartItems.map((it) => ({
     product_id: it.productId,
     quantity: it.quantity,
@@ -85,6 +88,8 @@ export async function createOrder(
     p_customer_phone: customer.phone,
     p_customer_address: customer.address,
     p_customer_city: customer.city,
+    p_customer_department: customer.department,
+    p_delivery_method: customer.deliveryMethod,
     p_items: rpcItems,
     p_screenshot_path: path,
   });
@@ -142,7 +147,7 @@ export async function createOrder(
     };
   });
 
-  // 4. Fetch order totals for confirmation
+  // 4. Fetch order totals for confirmation — RPC is authoritative for the final total
   const { data: orderRow } = await supabase
     .from("orders")
     .select("subtotal,shipping,total")

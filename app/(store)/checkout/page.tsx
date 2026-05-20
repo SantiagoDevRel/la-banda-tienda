@@ -1,16 +1,22 @@
 "use client";
 
-// 05 · Checkout — ported from ScreenCheckout.
-// Order summary + customer form with validation. Saves data to sessionStorage
-// and continues to the Nequi payment screen.
+// 05 · Checkout — customer-data form.
+// El cliente elige Departamento + Ciudad primero (autocomplete Colombia).
+// "Recoger en Medellín" SOLO aparece cuando eligió Antioquia + Medellín
+// exactamente (nada de Itagüí, Envigado, etc.). Default: Envío $15.000.
+// Guarda en sessionStorage y continúa al pago.
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Icon } from "@/components/icons";
+import { Icon, type IconName } from "@/components/icons";
 import { Money } from "@/components/ui";
 import { StoreHeader } from "@/components/StoreHeader";
+import { Combobox } from "@/components/storefront/Combobox";
 import { formatCOP } from "@/lib/data";
 import { useCart } from "@/lib/cart";
+import { DEPARTAMENTOS, ciudadesDe } from "@/lib/colombia";
+
+type DeliveryMethod = "shipping" | "pickup";
 
 interface FormState {
   name: string;
@@ -18,16 +24,41 @@ interface FormState {
   phone: string;
   addr: string;
   city: string;
+  department: string;
+  deliveryMethod: DeliveryMethod;
 }
-type Errors = Partial<Record<keyof FormState, string>>;
 
-const EMPTY: FormState = { name: "", email: "", phone: "", addr: "", city: "" };
+type ErrorFields = "name" | "email" | "addr" | "city" | "department";
+type Errors = Partial<Record<ErrorFields, string>>;
+
+const EMPTY: FormState = {
+  name: "",
+  email: "",
+  phone: "",
+  addr: "",
+  city: "",
+  department: "",
+  deliveryMethod: "shipping",
+};
 
 export default function CheckoutPage() {
-  const { items, subtotal, shipping, total, ready } = useCart();
+  const { items, subtotal, shippingCost, freeShippingMin, ready } = useCart();
   const router = useRouter();
   const [form, setForm] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
+
+  // Recoger solo es elegible en Medellín (Antioquia) exactamente.
+  const pickupEligible =
+    form.department === "Antioquia" && form.city === "Medellín";
+  const isPickup = form.deliveryMethod === "pickup" && pickupEligible;
+  const isShipping = !isPickup;
+
+  const shipping = isPickup
+    ? 0
+    : subtotal >= freeShippingMin
+      ? 0
+      : shippingCost;
+  const total = subtotal + shipping;
 
   // Empty cart → back to cart.
   useEffect(() => {
@@ -44,9 +75,26 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  function set<K extends keyof FormState>(key: K, value: string) {
+  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
-    setErrors((e) => ({ ...e, [key]: undefined }));
+    setErrors((e) => ({ ...e, [key as ErrorFields]: undefined }));
+  }
+
+  function setDepartment(dep: string) {
+    // cambiar de departamento invalida Medellín → vuelve a envío
+    setForm((f) => ({ ...f, department: dep, city: "", deliveryMethod: "shipping" }));
+    setErrors((e) => ({ ...e, department: undefined, city: undefined }));
+  }
+
+  function setCity(city: string) {
+    setForm((f) => {
+      const stillPickup =
+        f.deliveryMethod === "pickup" &&
+        f.department === "Antioquia" &&
+        city === "Medellín";
+      return { ...f, city, deliveryMethod: stillPickup ? "pickup" : "shipping" };
+    });
+    setErrors((e) => ({ ...e, city: undefined }));
   }
 
   function validate(): boolean {
@@ -55,8 +103,11 @@ export default function CheckoutPage() {
     if (!form.email.trim()) e.email = "Ingresá tu correo.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
       e.email = "Ese correo no parece válido.";
-    if (!form.addr.trim()) e.addr = "Ingresá la dirección de envío.";
-    if (!form.city.trim()) e.city = "Ingresá la ciudad.";
+    if (!form.department.trim() || !DEPARTAMENTOS.includes(form.department))
+      e.department = "Seleccioná un departamento válido.";
+    if (!form.city.trim()) e.city = "Seleccioná la ciudad.";
+    if (isShipping && !form.addr.trim())
+      e.addr = "Ingresá la dirección de envío.";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -64,8 +115,12 @@ export default function CheckoutPage() {
   function submit(ev: FormEvent) {
     ev.preventDefault();
     if (!validate()) return;
+    const payload: FormState = {
+      ...form,
+      deliveryMethod: isPickup ? "pickup" : "shipping",
+    };
     try {
-      sessionStorage.setItem("lds-checkout", JSON.stringify(form));
+      sessionStorage.setItem("lds-checkout", JSON.stringify(payload));
     } catch {
       /* ignore */
     }
@@ -81,12 +136,19 @@ export default function CheckoutPage() {
     );
   }
 
+  const cityOptions = form.department ? ciudadesDe(form.department) : [];
+  const shippingLabel = isPickup
+    ? "Gratis"
+    : subtotal >= freeShippingMin
+      ? "Gratis"
+      : formatCOP(shippingCost);
+
   return (
     <div className="store-screen">
       <StoreHeader title="Tus datos" back />
       <form onSubmit={submit} className="store-body" noValidate>
         <div className="store-sheet" style={{ padding: "18px 16px 16px" }}>
-          {/* Order summary */}
+          {/* ── Order summary ── */}
           <div
             style={{
               background: "var(--surface)",
@@ -148,10 +210,8 @@ export default function CheckoutPage() {
                 color: "var(--ink-3)",
               }}
             >
-              <span>Envío</span>
-              <span className="lds-num">
-                {shipping === 0 ? "Gratis" : formatCOP(shipping)}
-              </span>
+              <span>{isPickup ? "Recoge en Medellín" : "Envío"}</span>
+              <span className="lds-num">{shippingLabel}</span>
             </div>
             <div
               style={{
@@ -166,14 +226,12 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Form */}
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: 14 }}
-          >
+          {/* ── Customer form ── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <Field
               label="Nombre completo"
               value={form.name}
-              onChange={(v) => set("name", v)}
+              onChange={(v) => setField("name", v)}
               error={errors.name}
               placeholder="Tu nombre y apellido"
               autoComplete="name"
@@ -181,7 +239,7 @@ export default function CheckoutPage() {
             <Field
               label="Correo electrónico"
               value={form.email}
-              onChange={(v) => set("email", v)}
+              onChange={(v) => setField("email", v)}
               error={errors.email}
               placeholder="tucorreo@ejemplo.com"
               type="email"
@@ -191,34 +249,114 @@ export default function CheckoutPage() {
               label="Teléfono"
               optional
               value={form.phone}
-              onChange={(v) => set("phone", v)}
+              onChange={(v) => setField("phone", v)}
               placeholder="300 000 0000"
               type="tel"
               autoComplete="tel"
             />
+
+            <Combobox
+              label="Departamento"
+              value={form.department}
+              onChange={setDepartment}
+              options={DEPARTAMENTOS}
+              placeholder="Buscar departamento"
+              error={errors.department}
+            />
+            <Combobox
+              label="Ciudad"
+              value={form.city}
+              onChange={setCity}
+              options={cityOptions}
+              placeholder={
+                form.department
+                  ? "Buscar ciudad"
+                  : "Primero seleccioná el departamento"
+              }
+              disabled={
+                !form.department || !DEPARTAMENTOS.includes(form.department)
+              }
+              error={errors.city}
+            />
+
+            {/* ── Método de entrega ── */}
             <div>
-              <label className="lds-label">Dirección de envío</label>
-              <input
-                className="lds-input"
-                value={form.addr}
-                onChange={(e) => set("addr", e.target.value)}
-                placeholder="Calle, número, apto"
-                aria-invalid={!!errors.addr}
-                autoComplete="address-line1"
-              />
-              <input
-                className="lds-input"
-                value={form.city}
-                onChange={(e) => set("city", e.target.value)}
-                placeholder="Ciudad, departamento"
-                aria-invalid={!!errors.city}
-                autoComplete="address-level2"
-                style={{ marginTop: 8 }}
-              />
-              {(errors.addr || errors.city) && (
-                <div className="lds-error">{errors.addr || errors.city}</div>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--ink-2)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  marginBottom: 10,
+                }}
+              >
+                Método de entrega
+              </div>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 8 }}
+              >
+                <DeliveryOption
+                  selected={isShipping}
+                  onClick={() => setField("deliveryMethod", "shipping")}
+                  icon="truck"
+                  title="Envío a domicilio"
+                  subtitle={
+                    subtotal >= freeShippingMin
+                      ? "Gratis — superaste el mínimo"
+                      : `+${formatCOP(shippingCost)}`
+                  }
+                />
+                {pickupEligible && (
+                  <DeliveryOption
+                    selected={isPickup}
+                    onClick={() => setField("deliveryMethod", "pickup")}
+                    icon="bag"
+                    title="Recoger en Medellín"
+                    subtitle="Gratis"
+                  />
+                )}
+              </div>
+
+              {isPickup && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: "10px 12px",
+                    background: "var(--surface-alt)",
+                    borderRadius: "var(--r-md)",
+                    fontSize: 13,
+                    color: "var(--ink-2)",
+                    lineHeight: 1.5,
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <Icon name="info" size={16} color="var(--ink-3)" />
+                  <span>
+                    Nos comunicaremos contigo para pactar la entrega en la
+                    ciudad de Medellín.
+                  </span>
+                </div>
               )}
             </div>
+
+            {/* Dirección — solo envío */}
+            {isShipping && (
+              <div>
+                <label className="lds-label">Dirección de envío</label>
+                <input
+                  className="lds-input"
+                  value={form.addr}
+                  onChange={(e) => setField("addr", e.target.value)}
+                  placeholder="Calle, número, apto"
+                  aria-invalid={!!errors.addr}
+                  autoComplete="address-line1"
+                />
+                {errors.addr && <div className="lds-error">{errors.addr}</div>}
+              </div>
+            )}
           </div>
         </div>
 
@@ -233,6 +371,57 @@ export default function CheckoutPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+function DeliveryOption({
+  selected,
+  onClick,
+  icon,
+  title,
+  subtitle,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  icon: IconName;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "12px 14px",
+        borderRadius: "var(--r-lg)",
+        border: selected ? "1.5px solid var(--accent)" : "1.5px solid var(--line)",
+        background: selected ? "rgba(46, 161, 92, 0.1)" : "var(--surface)",
+        cursor: "pointer",
+        textAlign: "left",
+      }}
+    >
+      <div
+        style={{
+          width: 18,
+          height: 18,
+          borderRadius: "50%",
+          border: selected ? "5px solid var(--accent)" : "2px solid var(--line)",
+          flexShrink: 0,
+        }}
+      />
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
+          {title}
+        </div>
+        <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
+          {subtitle}
+        </div>
+      </div>
+      <Icon name={icon} size={18} color="var(--ink-3)" stroke={1.6} />
+    </button>
   );
 }
 

@@ -75,6 +75,8 @@ export type Database = {
           created_at: string;
           customer_address: string | null;
           customer_city: string | null;
+          customer_department: string | null;
+          delivery_method: string;
           customer_email: string;
           customer_name: string;
           customer_phone: string | null;
@@ -92,6 +94,8 @@ export type Database = {
           created_at?: string;
           customer_address?: string | null;
           customer_city?: string | null;
+          customer_department?: string | null;
+          delivery_method?: string;
           customer_email: string;
           customer_name: string;
           customer_phone?: string | null;
@@ -109,6 +113,8 @@ export type Database = {
           created_at?: string;
           customer_address?: string | null;
           customer_city?: string | null;
+          customer_department?: string | null;
+          delivery_method?: string;
           customer_email?: string;
           customer_name?: string;
           customer_phone?: string | null;
@@ -285,9 +291,11 @@ export type Database = {
         Args: {
           p_customer_address: string;
           p_customer_city: string;
+          p_customer_department: string;
           p_customer_email: string;
           p_customer_name: string;
           p_customer_phone: string;
+          p_delivery_method: string;
           p_items: Json;
           p_screenshot_path: string;
         };

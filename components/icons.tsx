@@ -97,6 +97,14 @@ const ICON_PATHS = {
       <path d="M8 8 V 6 A 4 4 0 0 1 16 6 V 8" />
     </g>
   ),
+  truck: (
+    <g>
+      <path d="M3 6 H 14 V 16 H 3 Z" />
+      <path d="M14 9 H 18 L 21 12 V 16 H 14" />
+      <circle cx="7" cy="18" r="1.6" />
+      <circle cx="17" cy="18" r="1.6" />
+    </g>
+  ),
   box: (
     <g>
       <path d="M4 8 L 12 4 L 20 8 L 20 18 L 12 22 L 4 18 Z" />

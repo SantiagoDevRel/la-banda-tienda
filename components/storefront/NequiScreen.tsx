@@ -41,6 +41,39 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [checkout, setCheckout] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    addr: string;
+    city: string;
+    department: string;
+    deliveryMethod: "shipping" | "pickup";
+  } | null>(null);
+
+  // Read the checkout data — the delivery method drives the displayed total.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("lds-checkout");
+      if (raw) {
+        const p = JSON.parse(raw);
+        setCheckout({
+          name: p.name ?? "",
+          email: p.email ?? "",
+          phone: p.phone ?? "",
+          addr: p.addr ?? "",
+          city: p.city ?? "",
+          department: p.department ?? "",
+          deliveryMethod: p.deliveryMethod === "pickup" ? "pickup" : "shipping",
+        });
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const isPickup = checkout?.deliveryMethod === "pickup";
+  const effectiveTotal = isPickup ? subtotal : total;
 
   // Empty cart → back to cart (unless we're mid-submission).
   useEffect(() => {
@@ -90,25 +123,15 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
     setSubmitting(true);
     setSubmitError("");
 
-    let customerName = "";
-    let customerEmail = "";
-    let customerPhone = "";
-    let customerAddr = "";
-    let customerCity = "";
-
-    try {
-      const raw = sessionStorage.getItem("lds-checkout");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        customerName = parsed.name ?? "";
-        customerEmail = parsed.email ?? "";
-        customerPhone = parsed.phone ?? "";
-        customerAddr = parsed.addr ?? "";
-        customerCity = parsed.city ?? "";
-      }
-    } catch {
-      /* ignore */
-    }
+    const c = checkout ?? {
+      name: "",
+      email: "",
+      phone: "",
+      addr: "",
+      city: "",
+      department: "",
+      deliveryMethod: "shipping" as const,
+    };
 
     const formData = new FormData();
     formData.set("screenshot", selectedFile);
@@ -121,11 +144,13 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
 
     const result = await createOrder(
       {
-        name: customerName,
-        email: customerEmail,
-        phone: customerPhone,
-        address: customerAddr,
-        city: customerCity,
+        name: c.name,
+        email: c.email,
+        phone: c.phone,
+        address: c.addr,
+        city: c.city,
+        department: c.department,
+        deliveryMethod: c.deliveryMethod,
       },
       cartItems,
       formData,
@@ -139,7 +164,7 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
 
     saveLastOrder({
       number: `#${result.orderNumber}`,
-      customerName,
+      customerName: c.name,
       items: result.items,
       subtotal: result.subtotal,
       shipping: result.shipping,
@@ -211,7 +236,7 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
                 color: "var(--ink)",
               }}
             >
-              {formatCOP(total)}
+              {formatCOP(effectiveTotal)}
             </div>
           </div>
 

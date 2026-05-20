@@ -19,6 +19,7 @@ interface ConfirmScreenProps {
 export function ConfirmScreen({ whatsapp }: ConfirmScreenProps) {
   const [order, setOrder] = useState<LastOrder | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [showPopup, setShowPopup] = useState(true);
 
   useEffect(() => {
     setOrder(readLastOrder());
@@ -86,6 +87,108 @@ export function ConfirmScreen({ whatsapp }: ConfirmScreenProps) {
 
   return (
     <div className="store-screen">
+      {showPopup && (
+        <div
+          className="store-scrim"
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+            zIndex: 60,
+          }}
+          onClick={() => setShowPopup(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 380,
+              background: "var(--surface)",
+              border: "1px solid var(--line)",
+              borderRadius: "var(--r-xl)",
+              padding: "30px 22px 22px",
+              textAlign: "center",
+              boxShadow: "0 24px 70px rgba(0,0,0,0.55)",
+              position: "relative",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setShowPopup(false)}
+              aria-label="Cerrar"
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 12,
+                width: 30,
+                height: 30,
+                borderRadius: "50%",
+                background: "var(--surface-alt)",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Icon name="close" size={16} color="var(--ink-3)" />
+            </button>
+
+            <div
+              style={{
+                width: 60,
+                height: 60,
+                borderRadius: "50%",
+                background: "var(--accent-tint)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Icon name="check" size={30} stroke={2.5} color="var(--accent-ink)" />
+            </div>
+
+            <h2 style={{ fontSize: 20, marginTop: 14, color: "var(--ink)" }}>
+              ¡¡Ey Gracias por apoyarnos!!
+            </h2>
+            <p
+              style={{
+                fontSize: 14,
+                color: "var(--ink-2)",
+                marginTop: 10,
+                lineHeight: 1.55,
+              }}
+            >
+              Recibimos tu pedido, y desde ya comenzaremos a prepararlo. Te
+              pedimos paciencia, los envíos pueden tardar hasta 6 días hábiles,
+              pero no te preocupes,{" "}
+              <strong style={{ color: "var(--ink)" }}>¡VALDRÁ LA PENA!</strong>
+            </p>
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--accent-ink)",
+                marginTop: 14,
+                fontWeight: 600,
+                fontFamily: "var(--font-display)",
+                lineHeight: 1.4,
+              }}
+            >
+              La Banda de Los del Sur — Hay Fiesta en la Popular.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setShowPopup(false)}
+              className="lds-btn lds-btn-primary lds-btn-lg lds-btn-block"
+              style={{ marginTop: 18 }}
+            >
+              Listo
+            </button>
+          </div>
+        </div>
+      )}
+
       <StoreHeader />
       <div className="store-body">
         <div className="store-sheet">

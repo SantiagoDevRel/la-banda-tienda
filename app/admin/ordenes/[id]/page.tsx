@@ -353,22 +353,35 @@ export default async function OrderDetailPage({
                 <span style={{ color: "var(--ink-3)" }}>Teléfono</span>
                 <span>{order.phone || "—"}</span>
               </div>
-              {(order.customerAddress || order.customerCity) && (
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--ink-3)" }}>Dirección</span>
-                  <span style={{ textAlign: "right", maxWidth: 180 }}>
-                    {order.customerAddress}
-                    {order.customerCity && (
-                      <>
-                        <br />
-                        <span style={{ color: "var(--ink-3)" }}>
-                          {order.customerCity}
-                        </span>
-                      </>
-                    )}
-                  </span>
-                </div>
-              )}
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "var(--ink-3)" }}>Entrega</span>
+                <span style={{ fontWeight: 600 }}>
+                  {order.deliveryMethod === "pickup"
+                    ? "Recoge en Medellín"
+                    : "Envío a domicilio"}
+                </span>
+              </div>
+              {order.deliveryMethod !== "pickup" &&
+                (order.customerAddress || order.customerCity) && (
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <span style={{ color: "var(--ink-3)" }}>Dirección</span>
+                    <span style={{ textAlign: "right", maxWidth: 180 }}>
+                      {order.customerAddress}
+                      {(order.customerCity || order.customerDepartment) && (
+                        <>
+                          <br />
+                          <span style={{ color: "var(--ink-3)" }}>
+                            {[order.customerCity, order.customerDepartment]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </span>
+                        </>
+                      )}
+                    </span>
+                  </div>
+                )}
             </div>
           </div>
 

@@ -227,6 +227,8 @@ export interface OrderItem {
 export interface OrderDetail extends OrderRow {
   customerAddress: string | null;
   customerCity: string | null;
+  customerDepartment: string | null;
+  deliveryMethod: string;
   adminNotes: string | null;
   paymentScreenshotPath: string | null;
   orderItems: OrderItem[];
@@ -274,6 +276,8 @@ export async function getOrderWithItems(id: string): Promise<OrderDetail | null>
     ...base,
     customerAddress: order.customer_address,
     customerCity: order.customer_city,
+    customerDepartment: order.customer_department,
+    deliveryMethod: order.delivery_method,
     adminNotes: order.admin_notes,
     paymentScreenshotPath: order.payment_screenshot_path,
     orderItems,
