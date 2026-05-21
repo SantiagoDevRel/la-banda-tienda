@@ -21,6 +21,7 @@ interface ComboboxProps {
   placeholder?: string;
   disabled?: boolean;
   error?: string;
+  required?: boolean;
 }
 
 export function Combobox({
@@ -31,6 +32,7 @@ export function Combobox({
   placeholder = "Buscar…",
   disabled = false,
   error,
+  required = false,
 }: ComboboxProps) {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -116,6 +118,7 @@ export function Combobox({
     <div ref={containerRef} style={{ position: "relative" }}>
       <label htmlFor={id} className="lds-label">
         {label}
+        {required && <span style={{ color: "#f87171" }}> *</span>}
       </label>
       <input
         ref={inputRef}

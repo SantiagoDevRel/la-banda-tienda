@@ -28,7 +28,7 @@ interface FormState {
   deliveryMethod: DeliveryMethod;
 }
 
-type ErrorFields = "name" | "email" | "addr" | "city" | "department";
+type ErrorFields = "name" | "email" | "phone" | "addr" | "city" | "department";
 type Errors = Partial<Record<ErrorFields, string>>;
 
 const EMPTY: FormState = {
@@ -103,6 +103,7 @@ export default function CheckoutPage() {
     if (!form.email.trim()) e.email = "Ingresá tu correo.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
       e.email = "Ese correo no parece válido.";
+    if (!form.phone.trim()) e.phone = "Ingresá tu número de celular.";
     if (!form.department.trim() || !DEPARTAMENTOS.includes(form.department))
       e.department = "Seleccioná un departamento válido.";
     if (!form.city.trim()) e.city = "Seleccioná la ciudad.";
@@ -246,10 +247,10 @@ export default function CheckoutPage() {
               autoComplete="email"
             />
             <Field
-              label="Teléfono"
-              optional
+              label="Celular"
               value={form.phone}
               onChange={(v) => setField("phone", v)}
+              error={errors.phone}
               placeholder="300 000 0000"
               type="tel"
               autoComplete="tel"
@@ -262,6 +263,7 @@ export default function CheckoutPage() {
               options={DEPARTAMENTOS}
               placeholder="Buscar departamento"
               error={errors.department}
+              required
             />
             <Combobox
               label="Ciudad"
@@ -277,6 +279,7 @@ export default function CheckoutPage() {
                 !form.department || !DEPARTAMENTOS.includes(form.department)
               }
               error={errors.city}
+              required
             />
 
             {/* ── Método de entrega ── */}
@@ -345,7 +348,10 @@ export default function CheckoutPage() {
             {/* Dirección — solo envío */}
             {isShipping && (
               <div>
-                <label className="lds-label">Dirección de envío</label>
+                <label className="lds-label">
+                  Dirección de envío
+                  <span style={{ color: "#f87171" }}> *</span>
+                </label>
                 <input
                   className="lds-input"
                   value={form.addr}
@@ -447,11 +453,14 @@ function Field({
   return (
     <div>
       <label className="lds-label">
-        {label}{" "}
-        {optional && (
+        {label}
+        {optional ? (
           <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>
+            {" "}
             (opcional)
           </span>
+        ) : (
+          <span style={{ color: "#f87171" }}> *</span>
         )}
       </label>
       <input
