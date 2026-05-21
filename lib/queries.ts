@@ -4,6 +4,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/database.types";
 import type { Product, Order, Settings } from "@/lib/types";
+import { formatBogota, bogotaTodayStartISO } from "@/lib/time";
 
 type DbProduct = Database["public"]["Tables"]["products"]["Row"];
 type DbOrder = Database["public"]["Tables"]["orders"]["Row"];
@@ -57,12 +58,7 @@ function dbOrderToOrder(
     total: row.total,
     subtotal: row.subtotal,
     shipping: row.shipping,
-    date: new Date(row.created_at).toLocaleDateString("es-CO", {
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
+    date: formatBogota(row.created_at),
     status: row.status as Order["status"],
     items: itemCount,
   };
@@ -410,8 +406,8 @@ export async function getSalesSummary(): Promise<SalesSummary> {
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const supabase = await createClient();
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  // "Hoy" según el calendario colombiano, no el del servidor (UTC).
+  const todayStart = bogotaTodayStartISO();
 
   const [pendingRes, todayRes, totalRes, lowStockRes] = await Promise.all([
     supabase
@@ -421,7 +417,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     supabase
       .from("orders")
       .select("total")
-      .gte("created_at", todayStart.toISOString()),
+      .gte("created_at", todayStart),
     supabase
       .from("orders")
       .select("id", { count: "exact", head: true }),
