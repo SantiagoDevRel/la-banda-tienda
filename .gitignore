@@ -46,3 +46,6 @@ next-env.d.ts
 /_source-videos/
 
 .vercel
+
+# Playwright MCP scratch
+.playwright-mcp/
