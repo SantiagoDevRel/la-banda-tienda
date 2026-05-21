@@ -12,11 +12,7 @@ import { StoreHeader } from "@/components/StoreHeader";
 import { formatCOP } from "@/lib/data";
 import { readLastOrder, type LastOrder } from "@/lib/lastOrder";
 
-interface ConfirmScreenProps {
-  whatsapp: string;
-}
-
-export function ConfirmScreen({ whatsapp }: ConfirmScreenProps) {
+export function ConfirmScreen() {
   const [order, setOrder] = useState<LastOrder | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [showPopup, setShowPopup] = useState(true);
@@ -25,8 +21,6 @@ export function ConfirmScreen({ whatsapp }: ConfirmScreenProps) {
     setOrder(readLastOrder());
     setLoaded(true);
   }, []);
-
-  const waHref = "https://wa.me/" + whatsapp.replace(/\D/g, "");
 
   if (!loaded) {
     return (
@@ -350,18 +344,9 @@ export function ConfirmScreen({ whatsapp }: ConfirmScreenProps) {
               gap: 10,
             }}
           >
-            <a
-              href={waHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="lds-btn lds-btn-primary lds-btn-lg lds-btn-block"
-            >
-              <Icon name="whatsapp" size={18} color="#fff" stroke={1.8} />
-              Escribirnos por WhatsApp
-            </a>
             <Link
               href="/"
-              className="lds-btn lds-btn-secondary lds-btn-block"
+              className="lds-btn lds-btn-primary lds-btn-lg lds-btn-block"
             >
               Seguir comprando
             </Link>
