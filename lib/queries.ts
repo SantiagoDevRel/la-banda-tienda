@@ -343,6 +343,70 @@ export interface DashboardMetrics {
   lowStockCount: number;
 }
 
+/** Money bucket: separates product revenue (subtotal) from shipping. */
+export interface RevenueBucket {
+  count: number;
+  product: number; // suma de subtotales (lo vendido en productos)
+  shipping: number; // suma de envíos cobrados
+  total: number; // product + shipping
+}
+
+export interface SalesSummary {
+  pending: RevenueBucket; // pedidos por verificar
+  confirmed: RevenueBucket; // pago verificado (done + shipped)
+  combined: RevenueBucket; // pending + confirmed
+}
+
+const emptyBucket = (): RevenueBucket => ({
+  count: 0,
+  product: 0,
+  shipping: 0,
+  total: 0,
+});
+
+function addToBucket(b: RevenueBucket, subtotal: number, shipping: number) {
+  b.count += 1;
+  b.product += subtotal;
+  b.shipping += shipping;
+  b.total += subtotal + shipping;
+}
+
+/**
+ * Resumen de ventas: total vendido (productos) vs envíos cobrados, separado
+ * por pedidos pendientes y confirmados (done + shipped). Excluye cancelados.
+ */
+export async function getSalesSummary(): Promise<SalesSummary> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select("status, subtotal, shipping")
+    .neq("status", "cancel");
+
+  const pending = emptyBucket();
+  const confirmed = emptyBucket();
+  const combined = emptyBucket();
+
+  if (error) {
+    console.error("[getSalesSummary]", error.message);
+    return { pending, confirmed, combined };
+  }
+
+  for (const o of data ?? []) {
+    const sub = o.subtotal ?? 0;
+    const ship = o.shipping ?? 0;
+    if (o.status === "pending") {
+      addToBucket(pending, sub, ship);
+    } else {
+      // done | shipped — pago verificado
+      addToBucket(confirmed, sub, ship);
+    }
+    addToBucket(combined, sub, ship);
+  }
+
+  return { pending, confirmed, combined };
+}
+
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const supabase = await createClient();
 

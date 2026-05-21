@@ -4,8 +4,132 @@ import { AdminShell } from "@/components/AdminShell";
 import { Icon } from "@/components/icons";
 import { OrderStatusBadge } from "@/components/ui";
 import { formatCOP } from "@/lib/data";
-import { getDashboardMetrics, getOrders } from "@/lib/queries";
+import {
+  getDashboardMetrics,
+  getOrders,
+  getSalesSummary,
+  type RevenueBucket,
+} from "@/lib/queries";
 import type { ReactNode } from "react";
+
+// ── Sales summary helpers ─────────────────────────────────────────
+function SaleStat({
+  label,
+  hint,
+  value,
+  emphasized,
+}: {
+  label: string;
+  hint: string;
+  value: number;
+  emphasized?: boolean;
+}) {
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: 12,
+          fontWeight: 600,
+          color: "var(--ink-2)",
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: 26,
+          fontWeight: 700,
+          marginTop: 6,
+          letterSpacing: "-0.02em",
+          color: emphasized ? "var(--accent-ink)" : "var(--ink)",
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {formatCOP(value)}
+      </div>
+      <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>
+        {hint}
+      </div>
+    </div>
+  );
+}
+
+function BreakdownCard({
+  label,
+  dotColor,
+  bucket,
+}: {
+  label: string;
+  dotColor: string;
+  bucket: RevenueBucket;
+}) {
+  return (
+    <div
+      style={{
+        background: "var(--surface-alt)",
+        borderRadius: "var(--r-md)",
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          fontSize: 13,
+          fontWeight: 700,
+        }}
+      >
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: dotColor,
+            flexShrink: 0,
+          }}
+        />
+        {label}
+        <span style={{ color: "var(--ink-3)", fontWeight: 500 }}>
+          · {bucket.count} {bucket.count === 1 ? "pedido" : "pedidos"}
+        </span>
+      </div>
+      <div
+        style={{
+          marginTop: 10,
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+          fontSize: 12.5,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span style={{ color: "var(--ink-3)" }}>Productos</span>
+          <span className="lds-num">{formatCOP(bucket.product)}</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span style={{ color: "var(--ink-3)" }}>Envíos</span>
+          <span className="lds-num">{formatCOP(bucket.shipping)}</span>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            paddingTop: 6,
+            borderTop: "1px solid var(--line-2)",
+            fontWeight: 700,
+          }}
+        >
+          <span>Total</span>
+          <span className="lds-num">{formatCOP(bucket.total)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function MetricCard({
   label,
@@ -78,9 +202,10 @@ function MetricCard({
 }
 
 export default async function DashboardPage() {
-  const [metrics, recentOrders] = await Promise.all([
+  const [metrics, recentOrders, sales] = await Promise.all([
     getDashboardMetrics(),
     getOrders(),
+    getSalesSummary(),
   ]);
 
   const quickActions = [
@@ -144,6 +269,78 @@ export default async function DashboardPage() {
           accentBg="var(--surface-alt)"
           icon={<Icon name="grid" size={16} color="var(--ink-2)" />}
         />
+      </div>
+
+      {/* Sales summary — productos vendidos vs envíos cobrados */}
+      <div
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--r-lg)",
+          padding: 18,
+          marginTop: 16,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700 }}>
+              Resumen de ventas
+            </div>
+            <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
+              Pendientes + confirmados · no incluye cancelados
+            </div>
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--ink-3)",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {sales.combined.count}{" "}
+            {sales.combined.count === 1 ? "pedido" : "pedidos"}
+          </div>
+        </div>
+
+        <div className="admin-sales-grid" style={{ marginTop: 16 }}>
+          <SaleStat
+            label="Total vendido"
+            hint="solo productos"
+            value={sales.combined.product}
+          />
+          <SaleStat
+            label="Envíos cobrados"
+            hint="domicilios"
+            value={sales.combined.shipping}
+          />
+          <SaleStat
+            label="Total recaudado"
+            hint="productos + envíos"
+            value={sales.combined.total}
+            emphasized
+          />
+        </div>
+
+        <div className="admin-sales-breakdown">
+          <BreakdownCard
+            label="Pendientes"
+            dotColor="var(--status-pending-ink)"
+            bucket={sales.pending}
+          />
+          <BreakdownCard
+            label="Confirmados"
+            dotColor="var(--accent-ink)"
+            bucket={sales.confirmed}
+          />
+        </div>
       </div>
 
       {/* Bottom row */}
