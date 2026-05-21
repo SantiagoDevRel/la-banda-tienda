@@ -350,9 +350,9 @@ export default function CheckoutPage() {
                 >
                   <Icon name="info" size={16} color="var(--ink-3)" />
                   <span>
-                    Ahora solo pagás los productos. El envío se paga{" "}
+                    Ahora solo pagas los productos. El valor del envío se paga{" "}
                     <strong style={{ color: "var(--ink)" }}>
-                      contra entrega
+                      contraentrega
                     </strong>{" "}
                     cuando lo recibas.
                   </span>
