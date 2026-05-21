@@ -306,7 +306,14 @@ export type Database = {
           p_items: Json;
           p_screenshot_path: string;
         };
-        Returns: { new_order_id: string; new_order_number: number }[];
+        Returns: {
+          new_order_id: string;
+          new_order_number: number;
+          out_subtotal: number;
+          out_shipping: number;
+          out_total: number;
+          out_items: Json;
+        }[];
       };
       is_admin: { Args: never; Returns: boolean };
       update_order_status: {

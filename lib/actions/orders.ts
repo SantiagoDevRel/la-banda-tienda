@@ -3,7 +3,10 @@
 // Tienda La Banda — server action: createOrder
 // Uploads payment screenshot to Supabase Storage, then calls the
 // create_order RPC (atomic: validates stock, snapshots prices, decrements stock).
-// The RPC now accepts p_customer_department and p_delivery_method (9 args total).
+// The RPC returns the totals + an items snapshot so we never have to SELECT the
+// order back — orders/order_items are RLS-restricted to is_admin(), so the anon
+// customer could not read their own order (that bug showed $0 / no items on the
+// confirmation screen and in the band's email).
 
 import { createClient } from "@/lib/supabase/server";
 import { sendNewOrderEmail } from "@/lib/email";
@@ -127,56 +130,39 @@ export async function createOrder(
     };
   }
 
-  const { new_order_id, new_order_number } = rpcData[0];
+  // 3. Read totals + item snapshot straight from the RPC return.
+  // IMPORTANT: we do NOT SELECT back from orders/order_items here — RLS only
+  // allows is_admin() to read those, so the anonymous customer who just placed
+  // the order would get empty rows (confirmation + email showing $0 / no items).
+  // The RPC runs SECURITY DEFINER and returns everything we need.
+  const {
+    new_order_id,
+    new_order_number,
+    out_subtotal,
+    out_shipping,
+    out_total,
+    out_items,
+  } = rpcData[0];
 
-  // 3. Fetch order items for the confirmation snapshot + email
-  const { data: itemRows } = await supabase
-    .from("order_items")
-    .select("product_name,unit_price,quantity,size,product_id")
-    .eq("order_id", new_order_id);
+  const items = ((out_items ?? []) as Array<{
+    name: string;
+    qty: number;
+    lineTotal: number;
+    glyph: string | null;
+    color: string | null;
+    image: string | null;
+  }>).map((it) => ({
+    name: it.name,
+    qty: it.qty,
+    lineTotal: it.lineTotal,
+    glyph: (it.glyph ?? "shirt") as GlyphKind,
+    color: it.color ?? "#1E7A3D",
+    image: it.image ?? null,
+  }));
 
-  // Fetch product details (glyph/color/image) for each item
-  const productIds = [
-    ...new Set(
-      (itemRows ?? [])
-        .map((it) => it.product_id)
-        .filter((id): id is string => id !== null),
-    ),
-  ];
-
-  const { data: productRows } = productIds.length
-    ? await supabase
-        .from("products")
-        .select("id,glyph,color,image_url")
-        .in("id", productIds)
-    : { data: [] };
-
-  const productMap = new Map(
-    (productRows ?? []).map((p) => [p.id, p]),
-  );
-
-  const items = (itemRows ?? []).map((it) => {
-    const prod = it.product_id ? productMap.get(it.product_id) : undefined;
-    return {
-      name: it.product_name,
-      qty: it.quantity,
-      lineTotal: it.unit_price * it.quantity,
-      glyph: (prod?.glyph ?? "shirt") as GlyphKind,
-      color: prod?.color ?? "#1E7A3D",
-      image: prod?.image_url ?? null,
-    };
-  });
-
-  // 4. Fetch order totals for confirmation — RPC is authoritative for the final total
-  const { data: orderRow } = await supabase
-    .from("orders")
-    .select("subtotal,shipping,total")
-    .eq("id", new_order_id)
-    .single();
-
-  const subtotal = orderRow?.subtotal ?? 0;
-  const shipping = orderRow?.shipping ?? 0;
-  const total = orderRow?.total ?? 0;
+  const subtotal = out_subtotal ?? 0;
+  const shipping = out_shipping ?? 0;
+  const total = out_total ?? 0;
 
   // 5. Send notification email.
   // IMPORTANT: we AWAIT this. With fire-and-forget the serverless function
