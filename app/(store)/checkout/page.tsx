@@ -42,7 +42,7 @@ const EMPTY: FormState = {
 };
 
 export default function CheckoutPage() {
-  const { items, subtotal, shippingCost, freeShippingMin, ready } = useCart();
+  const { items, subtotal, ready } = useCart();
   const router = useRouter();
   const [form, setForm] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
@@ -53,12 +53,9 @@ export default function CheckoutPage() {
   const isPickup = form.deliveryMethod === "pickup" && pickupEligible;
   const isShipping = !isPickup;
 
-  const shipping = isPickup
-    ? 0
-    : subtotal >= freeShippingMin
-      ? 0
-      : shippingCost;
-  const total = subtotal + shipping;
+  // El envío no se cobra acá: se paga contra entrega. El cliente solo paga los
+  // productos por adelantado, así que el total es el subtotal.
+  const total = subtotal;
 
   // Empty cart → back to cart.
   useEffect(() => {
@@ -138,11 +135,7 @@ export default function CheckoutPage() {
   }
 
   const cityOptions = form.department ? ciudadesDe(form.department) : [];
-  const shippingLabel = isPickup
-    ? "Gratis"
-    : subtotal >= freeShippingMin
-      ? "Gratis"
-      : formatCOP(shippingCost);
+  const shippingLabel = isPickup ? "Gratis" : "Se paga al recibir";
 
   return (
     <div className="store-screen">
@@ -304,11 +297,7 @@ export default function CheckoutPage() {
                   onClick={() => setField("deliveryMethod", "shipping")}
                   icon="truck"
                   title="Envío a domicilio"
-                  subtitle={
-                    subtotal >= freeShippingMin
-                      ? "Gratis — superaste el mínimo"
-                      : `+${formatCOP(shippingCost)}`
-                  }
+                  subtitle="El envío se paga contra entrega"
                 />
                 {pickupEligible && (
                   <DeliveryOption
@@ -340,6 +329,32 @@ export default function CheckoutPage() {
                   <span>
                     Nos comunicaremos contigo para pactar la entrega en la
                     ciudad de Medellín.
+                  </span>
+                </div>
+              )}
+
+              {isShipping && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: "10px 12px",
+                    background: "var(--surface-alt)",
+                    borderRadius: "var(--r-md)",
+                    fontSize: 13,
+                    color: "var(--ink-2)",
+                    lineHeight: 1.5,
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <Icon name="info" size={16} color="var(--ink-3)" />
+                  <span>
+                    Ahora solo pagás los productos. El envío se paga{" "}
+                    <strong style={{ color: "var(--ink)" }}>
+                      contra entrega
+                    </strong>{" "}
+                    cuando lo recibas.
                   </span>
                 </div>
               )}

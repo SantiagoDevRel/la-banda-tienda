@@ -147,7 +147,11 @@ export default async function OrderDetailPage({
               >
                 <span>Envío</span>
                 <span className="lds-num">
-                  {order.shipping === 0 ? "Gratis" : formatCOP(order.shipping)}
+                  {order.deliveryMethod === "pickup"
+                    ? "Gratis"
+                    : order.shipping > 0
+                      ? formatCOP(order.shipping)
+                      : "Contra entrega"}
                 </span>
               </div>
               <div

@@ -334,6 +334,48 @@ export function ConfirmScreen() {
               </span>
               <Money value={order.total} weight={700} />
             </div>
+
+            {order.deliveryMethod !== "pickup" && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: "10px 12px",
+                  background: "var(--accent-tint)",
+                  borderRadius: "var(--r-md)",
+                  display: "flex",
+                  gap: 10,
+                  alignItems: "flex-start",
+                }}
+              >
+                <Icon
+                  name="truck"
+                  size={16}
+                  color="var(--accent-ink)"
+                  stroke={1.7}
+                />
+                <div style={{ lineHeight: 1.4 }}>
+                  <div
+                    style={{
+                      fontSize: 12.5,
+                      fontWeight: 800,
+                      color: "var(--accent-ink)",
+                      letterSpacing: "0.02em",
+                    }}
+                  >
+                    ¡IMPORTANTE!
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12.5,
+                      color: "var(--accent-ink)",
+                      marginTop: 2,
+                    }}
+                  >
+                    Debes pagar el valor del envío al momento de recibir.
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div

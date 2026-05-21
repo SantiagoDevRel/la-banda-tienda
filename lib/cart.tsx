@@ -149,8 +149,9 @@ export function CartProvider({
 
     const subtotal = items.reduce((s, it) => s + it.lineTotal, 0);
     const count = items.reduce((s, it) => s + it.qty, 0);
-    const shipping =
-      subtotal === 0 || subtotal >= freeShippingMin ? 0 : shippingCost;
+    // El envío se paga contra entrega (COD): no se cobra al hacer el pedido.
+    // El cliente solo paga los productos por adelantado.
+    const shipping = 0;
 
     return {
       items,

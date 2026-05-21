@@ -201,6 +201,7 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
       subtotal: result.subtotal,
       shipping: result.shipping,
       total: result.total,
+      deliveryMethod: c.deliveryMethod,
     });
 
     clear();
@@ -270,7 +271,59 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
             >
               {formatCOP(effectiveTotal)}
             </div>
+            {!isPickup && (
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "var(--ink-3)",
+                  marginTop: 6,
+                  lineHeight: 1.4,
+                }}
+              >
+                Solo los productos. El envío se paga contra entrega.
+              </div>
+            )}
           </div>
+
+          {/* Aviso: envío contra entrega (solo domicilio) */}
+          {!isPickup && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: "12px 14px",
+                background: "var(--accent-tint)",
+                border:
+                  "1px solid color-mix(in oklch, var(--accent) 28%, transparent)",
+                borderRadius: "var(--r-lg)",
+                display: "flex",
+                gap: 10,
+                alignItems: "flex-start",
+              }}
+            >
+              <Icon name="truck" size={18} color="var(--accent-ink)" stroke={1.7} />
+              <div style={{ lineHeight: 1.45 }}>
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 800,
+                    color: "var(--accent-ink)",
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  ¡IMPORTANTE!
+                </div>
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "var(--accent-ink)",
+                    marginTop: 2,
+                  }}
+                >
+                  Debes pagar el valor del envío al momento de recibir.
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Payment method cards */}
           {paymentMethods.length === 0 ? (

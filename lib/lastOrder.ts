@@ -20,6 +20,7 @@ export interface LastOrder {
   subtotal: number;
   shipping: number;
   total: number;
+  deliveryMethod?: "shipping" | "pickup";
 }
 
 const KEY = "lds-last-order";
