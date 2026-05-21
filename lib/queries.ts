@@ -24,6 +24,7 @@ export function dbProductToProduct(row: DbProduct): Product {
     desc: row.description,
     tags: [row.category],
     image: row.image_url ?? null,
+    customizable: row.customizable,
     placeholder: false,
   };
 }
@@ -233,6 +234,7 @@ export interface OrderDetail extends OrderRow {
   paymentScreenshotPath: string | null;
   orderItems: OrderItem[];
   screenshotUrl: string | null;
+  customArtworkUrl: string | null;
 }
 
 export async function getOrderWithItems(id: string): Promise<OrderDetail | null> {
@@ -270,6 +272,15 @@ export async function getOrderWithItems(id: string): Promise<OrderDetail | null>
     screenshotUrl = signedData?.signedUrl ?? null;
   }
 
+  // Signed URL for the custom artwork (bombo personalizado), if any.
+  let customArtworkUrl: string | null = null;
+  if (order.custom_artwork_path) {
+    const { data: artData } = await supabase.storage
+      .from("payment-screenshots")
+      .createSignedUrl(order.custom_artwork_path, 600);
+    customArtworkUrl = artData?.signedUrl ?? null;
+  }
+
   const base = dbOrderToOrder(order as DbOrder, orderItems.length);
 
   return {
@@ -282,6 +293,7 @@ export async function getOrderWithItems(id: string): Promise<OrderDetail | null>
     paymentScreenshotPath: order.payment_screenshot_path,
     orderItems,
     screenshotUrl,
+    customArtworkUrl,
   };
 }
 

@@ -75,7 +75,26 @@ export async function createOrder(
     };
   }
 
-  // 2. Call the create_order RPC (9-arg signature)
+  // 1b. Upload the custom artwork if present (customizable products: el bombo).
+  let artworkPath: string | null = null;
+  const artworkFile = screenshotFile.get("artwork") as File | null;
+  if (artworkFile && artworkFile.size > 0) {
+    const aExt = artworkFile.name.split(".").pop() ?? "jpg";
+    const aPath = `artwork-${crypto.randomUUID()}.${aExt}`;
+    const { error: aErr } = await supabase.storage
+      .from("payment-screenshots")
+      .upload(aPath, artworkFile, {
+        contentType: artworkFile.type,
+        upsert: false,
+      });
+    if (aErr) {
+      console.error("[createOrder] artwork upload error:", aErr.message);
+    } else {
+      artworkPath = aPath;
+    }
+  }
+
+  // 2. Call the create_order RPC
   const rpcItems = cartItems.map((it) => ({
     product_id: it.productId,
     quantity: it.quantity,
@@ -92,6 +111,7 @@ export async function createOrder(
     p_delivery_method: customer.deliveryMethod,
     p_items: rpcItems,
     p_screenshot_path: path,
+    p_custom_artwork_path: artworkPath ?? undefined,
   });
 
   if (rpcError || !rpcData || rpcData.length === 0) {

@@ -41,6 +41,10 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [artworkFile, setArtworkFile] = useState<File | null>(null);
+  const [artworkPreview, setArtworkPreview] = useState<string | null>(null);
+  const [artworkName, setArtworkName] = useState("");
+  const artworkRef = useRef<HTMLInputElement>(null);
   const [checkout, setCheckout] = useState<{
     name: string;
     email: string;
@@ -74,6 +78,8 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
 
   const isPickup = checkout?.deliveryMethod === "pickup";
   const effectiveTotal = isPickup ? subtotal : total;
+  // ¿Hay algún producto personalizable en el carrito? (ej. el bombo)
+  const needsArtwork = items.some((it) => it.product.customizable === true);
 
   // Empty cart → back to cart (unless we're mid-submission).
   useEffect(() => {
@@ -108,6 +114,27 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
     setFileName(f.name);
   }
 
+  async function onArtwork(e: ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type.startsWith("image/")) {
+      setFileError("El diseño debe ser una imagen (JPG o PNG).");
+      return;
+    }
+    if (f.size > 15 * 1024 * 1024) {
+      setFileError("La imagen del diseño es muy pesada (máx 15 MB).");
+      return;
+    }
+    setFileError("");
+    const compressed = await compressImage(f);
+    setArtworkFile(compressed);
+    setArtworkPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(compressed);
+    });
+    setArtworkName(f.name);
+  }
+
   function copyAccount(method: PaymentMethod) {
     navigator.clipboard
       ?.writeText(method.account_number.replace(/\s/g, ""))
@@ -120,6 +147,10 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
 
   async function confirmOrder() {
     if (!selectedFile || submitting) return;
+    if (needsArtwork && !artworkFile) {
+      setSubmitError("Subí el diseño que querés en tu bombo.");
+      return;
+    }
     setSubmitting(true);
     setSubmitError("");
 
@@ -135,6 +166,7 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
 
     const formData = new FormData();
     formData.set("screenshot", selectedFile);
+    if (artworkFile) formData.set("artwork", artworkFile);
 
     const cartItems = items.map((it) => ({
       productId: it.productId,
@@ -470,7 +502,147 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
             ))}
           </div>
 
-          {/* Dropzone */}
+          {/* Custom artwork — productos personalizables (ej. el bombo) */}
+          {needsArtwork && (
+            <div
+              style={{
+                marginTop: 18,
+                padding: 14,
+                background: "var(--surface)",
+                border: "1.5px solid var(--accent)",
+                borderRadius: "var(--r-lg)",
+              }}
+            >
+              <div style={{ fontSize: 14, fontWeight: 700 }}>
+                🥁 Diseño de tu bombo
+              </div>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "var(--ink-2)",
+                  marginTop: 4,
+                  lineHeight: 1.45,
+                }}
+              >
+                Subí el logo o la imagen que querés en el bombo. Coordinamos los
+                detalles finales por WhatsApp.
+              </div>
+              <input
+                ref={artworkRef}
+                type="file"
+                accept="image/*"
+                onChange={onArtwork}
+                style={{ display: "none" }}
+              />
+              {artworkPreview ? (
+                <div
+                  style={{
+                    marginTop: 12,
+                    display: "flex",
+                    gap: 12,
+                    alignItems: "center",
+                  }}
+                >
+                  <img
+                    src={artworkPreview}
+                    alt="Diseño del bombo"
+                    style={{
+                      width: 72,
+                      height: 72,
+                      objectFit: "cover",
+                      borderRadius: "var(--r-md)",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "var(--accent-ink)",
+                      }}
+                    >
+                      <Icon
+                        name="check"
+                        size={15}
+                        color="var(--accent-ink)"
+                        stroke={2.4}
+                      />
+                      Diseño cargado
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "var(--ink-3)",
+                        marginTop: 3,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {artworkName}
+                    </div>
+                    <button
+                      type="button"
+                      className="lds-btn lds-btn-secondary lds-btn-sm"
+                      style={{ marginTop: 8 }}
+                      onClick={() => artworkRef.current?.click()}
+                    >
+                      Cambiar diseño
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => artworkRef.current?.click()}
+                  style={{
+                    marginTop: 12,
+                    width: "100%",
+                    border: "1.5px dashed var(--accent)",
+                    borderRadius: "var(--r-lg)",
+                    padding: "20px 16px",
+                    background: "var(--surface-alt)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 8,
+                    cursor: "pointer",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "50%",
+                      background: "var(--accent-tint)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Icon
+                      name="image"
+                      size={20}
+                      color="var(--accent-ink)"
+                      stroke={1.7}
+                    />
+                  </span>
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>
+                    Subí tu diseño
+                  </span>
+                  <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
+                    JPG o PNG
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Dropzone — comprobante de pago */}
           <input
             ref={fileRef}
             type="file"
@@ -625,7 +797,7 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
           <button
             type="button"
             onClick={confirmOrder}
-            disabled={!selectedFile || submitting}
+            disabled={!selectedFile || (needsArtwork && !artworkFile) || submitting}
             className="lds-btn lds-btn-primary lds-btn-lg lds-btn-block"
           >
             {submitting ? "Confirmando…" : "Confirmar pedido"}

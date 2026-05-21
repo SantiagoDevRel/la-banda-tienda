@@ -289,6 +289,46 @@ export default async function OrderDetailPage({
               </span>
             </div>
           </div>
+
+          {/* Custom artwork (bombo personalizado) */}
+          {order.customArtworkUrl && (
+            <div
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--r-lg)",
+                padding: 18,
+              }}
+            >
+              <div style={{ fontSize: 14, fontWeight: 700 }}>
+                Diseño del cliente
+              </div>
+              <div
+                style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}
+              >
+                Logo / imagen para el bombo personalizado
+              </div>
+              <a
+                href={order.customArtworkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "block", marginTop: 14 }}
+              >
+                <img
+                  src={order.customArtworkUrl}
+                  alt="Diseño del bombo"
+                  style={{
+                    maxWidth: 260,
+                    maxHeight: 400,
+                    borderRadius: "var(--r-md)",
+                    border: "1px solid var(--line)",
+                    objectFit: "contain",
+                    display: "block",
+                  }}
+                />
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Right: customer + actions — floats above items on mobile */}

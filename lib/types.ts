@@ -26,6 +26,8 @@ export interface Product {
   image?: string | null;
   /** Galería completa de fotos (URLs en sort_order). Poblado por getProductWithImages. */
   gallery?: string[];
+  /** true = el comprador debe subir un diseño/logo (ej. bombo personalizado). */
+  customizable?: boolean;
   /** true = producto de muestra, aún sin foto/nombre definitivo. */
   placeholder?: boolean;
 }

@@ -73,13 +73,14 @@ export type Database = {
         Row: {
           admin_notes: string | null;
           created_at: string;
+          custom_artwork_path: string | null;
           customer_address: string | null;
           customer_city: string | null;
           customer_department: string | null;
-          delivery_method: string;
           customer_email: string;
           customer_name: string;
           customer_phone: string | null;
+          delivery_method: string;
           id: string;
           order_number: number;
           payment_screenshot_path: string | null;
@@ -92,13 +93,14 @@ export type Database = {
         Insert: {
           admin_notes?: string | null;
           created_at?: string;
+          custom_artwork_path?: string | null;
           customer_address?: string | null;
           customer_city?: string | null;
           customer_department?: string | null;
-          delivery_method?: string;
           customer_email: string;
           customer_name: string;
           customer_phone?: string | null;
+          delivery_method?: string;
           id?: string;
           order_number?: never;
           payment_screenshot_path?: string | null;
@@ -111,13 +113,14 @@ export type Database = {
         Update: {
           admin_notes?: string | null;
           created_at?: string;
+          custom_artwork_path?: string | null;
           customer_address?: string | null;
           customer_city?: string | null;
           customer_department?: string | null;
-          delivery_method?: string;
           customer_email?: string;
           customer_name?: string;
           customer_phone?: string | null;
+          delivery_method?: string;
           id?: string;
           order_number?: never;
           payment_screenshot_path?: string | null;
@@ -205,6 +208,7 @@ export type Database = {
           category: string;
           color: string;
           created_at: string;
+          customizable: boolean;
           description: string;
           glyph: string;
           id: string;
@@ -220,6 +224,7 @@ export type Database = {
           category?: string;
           color?: string;
           created_at?: string;
+          customizable?: boolean;
           description?: string;
           glyph?: string;
           id?: string;
@@ -235,6 +240,7 @@ export type Database = {
           category?: string;
           color?: string;
           created_at?: string;
+          customizable?: boolean;
           description?: string;
           glyph?: string;
           id?: string;
@@ -289,6 +295,7 @@ export type Database = {
     Functions: {
       create_order: {
         Args: {
+          p_custom_artwork_path?: string;
           p_customer_address: string;
           p_customer_city: string;
           p_customer_department: string;
