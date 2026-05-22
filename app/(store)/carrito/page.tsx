@@ -12,8 +12,7 @@ import { formatCOP } from "@/lib/data";
 import { useCart } from "@/lib/cart";
 
 export default function CartPage() {
-  const { items, subtotal, shipping, total, count, ready, setQty, remove } =
-    useCart();
+  const { items, subtotal, total, count, ready, setQty, remove } = useCart();
 
   return (
     <div className="store-screen">
@@ -163,10 +162,30 @@ export default function CartPage() {
             }}
           >
             <Row label="Subtotal" value={formatCOP(subtotal)} />
-            <Row
-              label="Envío"
-              value={shipping === 0 ? "Gratis" : formatCOP(shipping)}
-            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 12,
+                fontSize: 13,
+                color: "var(--ink-2)",
+                padding: "4px 0",
+                alignItems: "flex-start",
+              }}
+            >
+              <span style={{ flexShrink: 0 }}>Envío</span>
+              <span
+                style={{
+                  textAlign: "right",
+                  color: "var(--ink-3)",
+                  fontSize: 12,
+                  lineHeight: 1.35,
+                  maxWidth: "62%",
+                }}
+              >
+                El valor del envío lo pagas al recibir
+              </span>
+            </div>
             <hr className="lds-divider" style={{ margin: "10px 0" }} />
             <div
               style={{
