@@ -6,11 +6,19 @@ import { Resend } from "resend";
 import { formatCOP } from "@/lib/data";
 import type { GlyphKind } from "@/lib/types";
 
+/** Adjunto del correo (ya en base64) — comprobante de pago y/o diseño del bombo. */
+export interface EmailAttachment {
+  filename: string;
+  content: string; // base64
+}
+
 interface OrderEmailData {
   orderNumber: number;
   orderId: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
+  deliveryMethod?: "shipping" | "pickup";
   items: {
     name: string;
     qty: number;
@@ -20,6 +28,7 @@ interface OrderEmailData {
     image: string | null;
   }[];
   total: number;
+  attachments?: EmailAttachment[];
 }
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
@@ -54,6 +63,18 @@ export async function sendNewOrderEmail(order: OrderEmailData): Promise<void> {
     .map((it) => `• ${it.qty}× ${it.name} — ${formatCOP(it.lineTotal)}`)
     .join("\n");
 
+  const entrega =
+    order.deliveryMethod === "pickup"
+      ? "Recoge en Medellín (gratis)"
+      : "Envío a domicilio (el envío lo paga al recibir)";
+
+  const attachments = order.attachments ?? [];
+  const adjuntosNota = attachments.length
+    ? `\nAdjuntos en este correo:\n${attachments
+        .map((a) => `• ${a.filename}`)
+        .join("\n")}\n`
+    : "";
+
   try {
     const result = await resend.emails.send({
       from: FROM_EMAIL,
@@ -63,16 +84,20 @@ export async function sendNewOrderEmail(order: OrderEmailData): Promise<void> {
 Nuevo pedido recibido en Tienda La Banda.
 
 Pedido #${order.orderNumber}
-Cliente: ${order.customerName} (${order.customerEmail})
+Cliente: ${order.customerName} (${order.customerEmail})${order.customerPhone ? `\nCelular / WhatsApp: ${order.customerPhone}` : ""}
+Entrega: ${entrega}
 
 Artículos:
 ${itemLines}
 
-Total: ${formatCOP(order.total)}
-
+Total pagado (productos): ${formatCOP(order.total)}
+${adjuntosNota}
 Ver en el panel:
 https://latiendadelabanda.vercel.app/admin/ordenes/${order.orderId}
 `.trim(),
+      attachments: attachments.length
+        ? attachments.map((a) => ({ filename: a.filename, content: a.content }))
+        : undefined,
     });
 
     if (result.error) {

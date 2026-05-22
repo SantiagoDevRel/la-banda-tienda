@@ -164,7 +164,27 @@ export async function createOrder(
   const shipping = out_shipping ?? 0;
   const total = out_total ?? 0;
 
-  // 5. Send notification email.
+  // 5. Send notification email — con el comprobante de pago y el diseño del
+  // bombo ADJUNTOS, así llegan dentro del correo (no hay que entrar al panel).
+  // Las imágenes ya vienen comprimidas del cliente (lib/imageCompress).
+  const emailAttachments: { filename: string; content: string }[] = [];
+  try {
+    const screenshotExt = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+    emailAttachments.push({
+      filename: `comprobante-pago-${new_order_number}.${screenshotExt}`,
+      content: Buffer.from(await file.arrayBuffer()).toString("base64"),
+    });
+    if (artworkFile && artworkFile.size > 0) {
+      const artExt = (artworkFile.name.split(".").pop() ?? "jpg").toLowerCase();
+      emailAttachments.push({
+        filename: `diseno-bombo-${new_order_number}.${artExt}`,
+        content: Buffer.from(await artworkFile.arrayBuffer()).toString("base64"),
+      });
+    }
+  } catch (err) {
+    console.error("[createOrder] could not build email attachments:", err);
+  }
+
   // IMPORTANT: we AWAIT this. With fire-and-forget the serverless function
   // can terminate before the Resend API call completes and the email gets
   // silently lost. ~200ms latency in exchange for actually delivering.
@@ -174,8 +194,11 @@ export async function createOrder(
       orderId: new_order_id,
       customerName: customer.name,
       customerEmail: customer.email,
+      customerPhone: customer.phone,
+      deliveryMethod: customer.deliveryMethod,
       items,
       total,
+      attachments: emailAttachments,
     });
   } catch (err) {
     console.error("[createOrder] email send failed:", err);
