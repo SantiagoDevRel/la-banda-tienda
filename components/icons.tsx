@@ -9,35 +9,34 @@ import type { GlyphKind } from "@/lib/types";
 // ── Logo ──────────────────────────────────────────────────────
 export function Logo({
   size = "md",
-  tone = "dark",
 }: {
   size?: "sm" | "md" | "lg";
+  // `tone` se mantiene por compatibilidad con los llamados existentes; el
+  // wordmark es una imagen blanca (sirve sobre todos los fondos oscuros).
   tone?: "dark" | "light";
 }) {
   const img = size === "sm" ? 26 : size === "lg" ? 42 : 32;
-  const fs = size === "sm" ? 15 : size === "lg" ? 22 : 17;
+  // Wordmark "la Banda" (tipografía script). Aspect ratio del asset: 323×160.
+  const wmH = size === "sm" ? 24 : size === "lg" ? 40 : 30;
+  const wmW = Math.round(wmH * (323 / 160));
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
       <Image
         src="/main_logo_la_banda.webp"
-        alt="La Banda"
+        alt=""
         width={img}
         height={img}
         priority
         style={{ borderRadius: "50%", display: "block", objectFit: "cover" }}
       />
-      <span
-        style={{
-          fontFamily: "var(--font-display)",
-          fontWeight: 700,
-          fontSize: fs,
-          letterSpacing: "-0.02em",
-          color: tone === "light" ? "#fff" : "var(--ink)",
-          lineHeight: 1,
-        }}
-      >
-        La Banda
-      </span>
+      <Image
+        src="/wordmark-la-banda.webp"
+        alt="La Banda"
+        width={wmW}
+        height={wmH}
+        priority
+        style={{ display: "block", height: wmH, width: "auto" }}
+      />
     </div>
   );
 }
