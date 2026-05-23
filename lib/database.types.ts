@@ -84,6 +84,8 @@ export type Database = {
           id: string;
           order_number: number;
           payment_screenshot_path: string | null;
+          payment_validated: boolean;
+          payment_validated_at: string | null;
           shipping: number;
           status: Database["public"]["Enums"]["order_status"];
           subtotal: number;
@@ -104,6 +106,8 @@ export type Database = {
           id?: string;
           order_number?: never;
           payment_screenshot_path?: string | null;
+          payment_validated?: boolean;
+          payment_validated_at?: string | null;
           shipping?: number;
           status?: Database["public"]["Enums"]["order_status"];
           subtotal: number;
@@ -124,6 +128,8 @@ export type Database = {
           id?: string;
           order_number?: never;
           payment_screenshot_path?: string | null;
+          payment_validated?: boolean;
+          payment_validated_at?: string | null;
           shipping?: number;
           status?: Database["public"]["Enums"]["order_status"];
           subtotal?: number;
@@ -316,6 +322,10 @@ export type Database = {
         }[];
       };
       is_admin: { Args: never; Returns: boolean };
+      set_payment_validated: {
+        Args: { p_order_id: string; p_validated: boolean };
+        Returns: boolean;
+      };
       update_order_status: {
         Args: {
           p_new_status: Database["public"]["Enums"]["order_status"];

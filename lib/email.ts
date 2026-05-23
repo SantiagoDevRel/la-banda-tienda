@@ -115,6 +115,58 @@ https://latiendadelabanda.vercel.app/admin/ordenes/${order.orderId}
   }
 }
 
+/** Notify the customer that we validated their payment. */
+export async function sendPaymentValidatedEmail(order: {
+  orderNumber: number;
+  customerEmail: string;
+  total: number;
+}): Promise<void> {
+  if (!resend) {
+    console.log(
+      `[email] RESEND_API_KEY not set — skipping payment-validated #${order.orderNumber}`,
+    );
+    return;
+  }
+
+  console.log(
+    `[email] sending payment-validated #${order.orderNumber}  from="${FROM_EMAIL}"  to="${order.customerEmail}"`,
+  );
+
+  try {
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: order.customerEmail,
+      subject: `Validamos el pago de tu pedido #${order.orderNumber} — La Banda`,
+      text: `
+Hola, esperamos que estes muy bien.
+
+✅ Ya validamos el pago de tu pedido #${order.orderNumber} (${formatCOP(order.total)}).
+
+🕰️👐 Les pedimos paciencia, tenemos demasiados pedidos, el tiempo estimado de entrega es de 6 días hábiles aproximadamente, pero no te preocupes ¡VALDRÀ LA PENA!
+
+📱Si deseas nos Regalas tu número de Wsp para contactarte una vez tengamos listo tu pedido y así poder pactar la entrega de forma más ágil, sino no hay lío, nos avisas y te volvemos a contactar por acá.
+
+Gracias por apoyarnos.
+
+🎶La Banda de Los Del Sur - Hay Fiesta en la Popular🎶
+`.trim(),
+    });
+
+    if (result.error) {
+      console.error(
+        "[email] Resend rejected the payment-validated email:",
+        result.error,
+      );
+    } else {
+      console.log(
+        `[email] payment-validated #${order.orderNumber} accepted by Resend, id=${result.data?.id}`,
+      );
+    }
+  } catch (err) {
+    console.error("[email] sendPaymentValidatedEmail threw:", err);
+  }
+}
+
 /** Notify the customer that their order has been shipped. */
 export async function sendShippedEmail(order: {
   orderNumber: number;

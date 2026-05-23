@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatCOP } from "@/lib/data";
 import { OrderStatusBadge } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { PaymentValidatedToggle } from "@/components/admin/PaymentValidatedToggle";
 import type { OrderStatus } from "@/lib/types";
 import type { OrderRow } from "@/lib/queries";
 
@@ -144,6 +145,9 @@ export function OrdersTable({ orders }: OrdersTableProps) {
         <table className="lds-table">
           <thead>
             <tr>
+              <th style={{ width: 36, paddingRight: 0 }} title="Pago validado">
+                <Icon name="check" size={14} color="var(--ink-3)" />
+              </th>
               <th>#Pedido</th>
               <th>Cliente</th>
               <th>Items</th>
@@ -156,6 +160,14 @@ export function OrdersTable({ orders }: OrdersTableProps) {
           <tbody>
             {filtered.map((o) => (
               <tr key={o.orderId}>
+                <td style={{ paddingRight: 0 }}>
+                  <PaymentValidatedToggle
+                    orderId={o.orderId}
+                    initialValidated={o.paymentValidated}
+                    initialValidatedAt={o.paymentValidatedAt}
+                    variant="compact"
+                  />
+                </td>
                 <td style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
                   #{o.id}
                 </td>
@@ -189,7 +201,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
             {filtered.length === 0 && (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   style={{
                     textAlign: "center",
                     color: "var(--ink-3)",
@@ -208,28 +220,54 @@ export function OrdersTable({ orders }: OrdersTableProps) {
       {/* ── Mobile card list ── */}
       <div className="admin-mobile-only" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {filtered.map((o) => (
-          <Link
+          <div
             key={o.orderId}
-            href={`/admin/ordenes/${o.orderId}`}
             className="admin-order-card"
+            style={{ display: "flex", gap: 12, alignItems: "stretch" }}
           >
-            <div className="admin-order-card-top">
-              <span style={{ fontSize: 17, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-                #{o.id}
-              </span>
-              <OrderStatusBadge status={o.status} />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                paddingTop: 2,
+              }}
+            >
+              <PaymentValidatedToggle
+                orderId={o.orderId}
+                initialValidated={o.paymentValidated}
+                initialValidatedAt={o.paymentValidatedAt}
+                variant="compact"
+              />
             </div>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{o.customer}</div>
-            <div style={{ fontSize: 12, color: "var(--ink-3)" }}>{o.email}</div>
-            <div className="admin-order-card-meta" style={{ marginTop: 4 }}>
-              <span style={{ color: "var(--ink-3)", fontSize: 12 }}>
-                {o.items} {o.items === 1 ? "artículo" : "artículos"} · {o.date}
-              </span>
-              <span style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums", fontSize: 15 }}>
-                {formatCOP(o.total)}
-              </span>
-            </div>
-          </Link>
+            <Link
+              href={`/admin/ordenes/${o.orderId}`}
+              style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: 0,
+                color: "inherit",
+                textDecoration: "none",
+              }}
+            >
+              <div className="admin-order-card-top">
+                <span style={{ fontSize: 17, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+                  #{o.id}
+                </span>
+                <OrderStatusBadge status={o.status} />
+              </div>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{o.customer}</div>
+              <div style={{ fontSize: 12, color: "var(--ink-3)" }}>{o.email}</div>
+              <div className="admin-order-card-meta" style={{ marginTop: 4 }}>
+                <span style={{ color: "var(--ink-3)", fontSize: 12 }}>
+                  {o.items} {o.items === 1 ? "artículo" : "artículos"} · {o.date}
+                </span>
+                <span style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums", fontSize: 15 }}>
+                  {formatCOP(o.total)}
+                </span>
+              </div>
+            </Link>
+          </div>
         ))}
         {filtered.length === 0 && (
           <div

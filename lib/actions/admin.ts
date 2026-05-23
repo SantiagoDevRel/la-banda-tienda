@@ -4,7 +4,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { sendShippedEmail } from "@/lib/email";
+import { sendPaymentValidatedEmail, sendShippedEmail } from "@/lib/email";
 import { getStoreSettings } from "@/lib/queries";
 import type { Database } from "@/lib/database.types";
 
@@ -84,6 +84,59 @@ export async function updateOrderStatus(
     revalidatePath("/admin");
 
     return { ok: true };
+  } catch (err) {
+    return { ok: false, message: (err as Error).message };
+  }
+}
+
+/**
+ * Marca el pedido como "pago validado" (o lo desmarca). El RPC devuelve
+ * true solo si fue una transición false→true; en ese caso disparamos el
+ * correo al cliente con la copia de "ya validamos tu pago".
+ */
+export async function setPaymentValidated(
+  orderId: string,
+  validated: boolean,
+): Promise<{ ok: true; emailed: boolean } | { ok: false; message: string }> {
+  try {
+    const { supabase } = await requireAdmin();
+
+    const { data: changedToTrue, error } = await supabase.rpc(
+      "set_payment_validated",
+      { p_order_id: orderId, p_validated: validated },
+    );
+
+    if (error) {
+      console.error("[setPaymentValidated] RPC error:", error.message);
+      return { ok: false, message: error.message };
+    }
+
+    let emailed = false;
+    if (changedToTrue) {
+      const { data: order } = await supabase
+        .from("orders")
+        .select("order_number,customer_email,total")
+        .eq("id", orderId)
+        .single();
+
+      if (order) {
+        // Fire-and-forget: si Resend falla, igual queda marcado como validado.
+        sendPaymentValidatedEmail({
+          orderNumber: order.order_number,
+          customerEmail: order.customer_email,
+          total: order.total,
+        }).catch((err) =>
+          console.error("[setPaymentValidated] email failed:", err),
+        );
+        emailed = true;
+      }
+    }
+
+    revalidatePath(`/admin/ordenes/${orderId}`);
+    revalidatePath("/admin/ordenes");
+    revalidatePath("/admin");
+
+    return { ok: true, emailed };
   } catch (err) {
     return { ok: false, message: (err as Error).message };
   }

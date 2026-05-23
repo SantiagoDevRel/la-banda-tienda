@@ -5,6 +5,7 @@ import { AdminShell } from "@/components/AdminShell";
 import { Icon } from "@/components/icons";
 import { Money, OrderStatusBadge } from "@/components/ui";
 import { OrderActions } from "@/components/admin/OrderActions";
+import { PaymentValidatedToggle } from "@/components/admin/PaymentValidatedToggle";
 import { formatCOP } from "@/lib/data";
 import { getOrderWithItems } from "@/lib/queries";
 
@@ -428,6 +429,14 @@ export default async function OrderDetailPage({
                 )}
             </div>
           </div>
+
+          {/* Payment validation toggle */}
+          <PaymentValidatedToggle
+            orderId={order.orderId}
+            initialValidated={order.paymentValidated}
+            initialValidatedAt={order.paymentValidatedAt}
+            variant="card"
+          />
 
           {/* Actions (client component for interactivity) */}
           <OrderActions initialStatus={order.status} orderId={order.orderId} />

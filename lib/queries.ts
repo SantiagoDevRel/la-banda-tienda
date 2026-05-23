@@ -48,7 +48,13 @@ export function dbSettingsToSettings(row: DbSettings): Settings & {
 function dbOrderToOrder(
   row: DbOrder,
   itemCount: number = 0,
-): Order & { orderId: string; subtotal: number; shipping: number } {
+): Order & {
+  orderId: string;
+  subtotal: number;
+  shipping: number;
+  paymentValidated: boolean;
+  paymentValidatedAt: string | null;
+} {
   return {
     id: row.order_number,
     orderId: row.id,
@@ -61,6 +67,8 @@ function dbOrderToOrder(
     date: formatBogota(row.created_at),
     status: row.status as Order["status"],
     items: itemCount,
+    paymentValidated: row.payment_validated,
+    paymentValidatedAt: row.payment_validated_at,
   };
 }
 
