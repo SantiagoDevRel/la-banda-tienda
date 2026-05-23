@@ -28,6 +28,7 @@ export function PaymentValidatedToggle({
     initialValidatedAt ?? null,
   );
   const [emailedNow, setEmailedNow] = useState(false);
+  const [emailFail, setEmailFail] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -35,6 +36,7 @@ export function PaymentValidatedToggle({
     if (pending) return;
     setError("");
     setEmailedNow(false);
+    setEmailFail("");
     // Optimistic
     setValidated(next);
     if (next) setValidatedAt(new Date().toISOString());
@@ -47,10 +49,13 @@ export function PaymentValidatedToggle({
         setValidated(!next);
         setValidatedAt(initialValidatedAt ?? null);
         setError(res.message);
-      } else if (res.emailed) {
+        return;
+      }
+      if (res.email === "sent") {
         setEmailedNow(true);
-        // Hide the "email enviado" hint after 4s
-        setTimeout(() => setEmailedNow(false), 4000);
+        setTimeout(() => setEmailedNow(false), 6000);
+      } else if (typeof res.email === "object" && res.email.failed) {
+        setEmailFail(res.email.reason);
       }
     });
   }
@@ -64,9 +69,11 @@ export function PaymentValidatedToggle({
           toggle(!validated);
         }}
         title={
-          validated
-            ? `Pago validado${validatedAt ? ` · ${formatBogota(validatedAt)}` : ""} · click para desmarcar`
-            : "Marcar pago validado (envía correo al cliente)"
+          emailFail
+            ? `Validado pero el correo falló: ${emailFail}`
+            : validated
+              ? `Pago validado${validatedAt ? ` · ${formatBogota(validatedAt)}` : ""} · click para desmarcar`
+              : "Marcar pago validado (envía correo al cliente)"
         }
         style={{
           display: "inline-flex",
@@ -163,7 +170,7 @@ export function PaymentValidatedToggle({
         </button>
       </div>
 
-      {validated && (
+      {validated && !emailFail && (
         <div
           style={{
             marginTop: 12,
@@ -181,8 +188,29 @@ export function PaymentValidatedToggle({
           <span>
             {emailedNow
               ? "Correo enviado al cliente ahora mismo."
-              : "Ya se notificó al cliente por correo."}
+              : "Pago validado."}
           </span>
+        </div>
+      )}
+
+      {emailFail && (
+        <div
+          style={{
+            marginTop: 12,
+            padding: "10px 12px",
+            background: "rgba(185, 28, 28, 0.10)",
+            border: "1px solid rgba(185, 28, 28, 0.30)",
+            borderRadius: "var(--r-md)",
+            fontSize: 12,
+            color: "#991b1b",
+          }}
+        >
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>
+            El pago quedó validado, pero el correo no salió.
+          </div>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>
+            {emailFail}
+          </div>
         </div>
       )}
 

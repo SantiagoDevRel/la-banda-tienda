@@ -115,17 +115,26 @@ https://latiendadelabanda.vercel.app/admin/ordenes/${order.orderId}
   }
 }
 
+/** Resultado del envío — para mostrar feedback real en el admin UI. */
+export type EmailSendResult =
+  | { ok: true; id?: string }
+  | { ok: false; reason: "no-key" | "rejected" | "threw"; message: string };
+
 /** Notify the customer that we validated their payment. */
 export async function sendPaymentValidatedEmail(order: {
   orderNumber: number;
   customerEmail: string;
   total: number;
-}): Promise<void> {
+}): Promise<EmailSendResult> {
   if (!resend) {
     console.log(
       `[email] RESEND_API_KEY not set — skipping payment-validated #${order.orderNumber}`,
     );
-    return;
+    return {
+      ok: false,
+      reason: "no-key",
+      message: "RESEND_API_KEY no está seteada en el servidor.",
+    };
   }
 
   console.log(
@@ -157,13 +166,24 @@ Gracias por apoyarnos.
         "[email] Resend rejected the payment-validated email:",
         result.error,
       );
-    } else {
-      console.log(
-        `[email] payment-validated #${order.orderNumber} accepted by Resend, id=${result.data?.id}`,
-      );
+      return {
+        ok: false,
+        reason: "rejected",
+        message: result.error.message ?? String(result.error),
+      };
     }
+
+    console.log(
+      `[email] payment-validated #${order.orderNumber} accepted by Resend, id=${result.data?.id}`,
+    );
+    return { ok: true, id: result.data?.id };
   } catch (err) {
     console.error("[email] sendPaymentValidatedEmail threw:", err);
+    return {
+      ok: false,
+      reason: "threw",
+      message: (err as Error).message ?? String(err),
+    };
   }
 }
 

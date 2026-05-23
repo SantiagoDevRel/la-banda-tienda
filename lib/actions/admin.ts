@@ -94,10 +94,18 @@ export async function updateOrderStatus(
  * true solo si fue una transición false→true; en ese caso disparamos el
  * correo al cliente con la copia de "ya validamos tu pago".
  */
+export type SetPaymentValidatedResult =
+  | {
+      ok: true;
+      /** "sent" = Resend aceptó. "skipped" = no era transición false→true. */
+      email: "sent" | "skipped" | { failed: true; reason: string };
+    }
+  | { ok: false; message: string };
+
 export async function setPaymentValidated(
   orderId: string,
   validated: boolean,
-): Promise<{ ok: true; emailed: boolean } | { ok: false; message: string }> {
+): Promise<SetPaymentValidatedResult> {
   try {
     const { supabase } = await requireAdmin();
 
@@ -111,32 +119,39 @@ export async function setPaymentValidated(
       return { ok: false, message: error.message };
     }
 
-    let emailed = false;
-    if (changedToTrue) {
-      const { data: order } = await supabase
-        .from("orders")
-        .select("order_number,customer_email,total")
-        .eq("id", orderId)
-        .single();
-
-      if (order) {
-        // Fire-and-forget: si Resend falla, igual queda marcado como validado.
-        sendPaymentValidatedEmail({
-          orderNumber: order.order_number,
-          customerEmail: order.customer_email,
-          total: order.total,
-        }).catch((err) =>
-          console.error("[setPaymentValidated] email failed:", err),
-        );
-        emailed = true;
-      }
-    }
-
     revalidatePath(`/admin/ordenes/${orderId}`);
     revalidatePath("/admin/ordenes");
     revalidatePath("/admin");
 
-    return { ok: true, emailed };
+    if (!changedToTrue) {
+      return { ok: true, email: "skipped" };
+    }
+
+    const { data: order } = await supabase
+      .from("orders")
+      .select("order_number,customer_email,total")
+      .eq("id", orderId)
+      .single();
+
+    if (!order) {
+      return { ok: true, email: { failed: true, reason: "Pedido no encontrado tras el update." } };
+    }
+
+    // Esperamos el resultado real para mostrarle al admin si Resend aceptó
+    // o rechazó (típico: sender no verificado, sandbox limitando destinatarios).
+    const sendRes = await sendPaymentValidatedEmail({
+      orderNumber: order.order_number,
+      customerEmail: order.customer_email,
+      total: order.total,
+    });
+
+    if (sendRes.ok) {
+      return { ok: true, email: "sent" };
+    }
+    return {
+      ok: true,
+      email: { failed: true, reason: sendRes.message },
+    };
   } catch (err) {
     return { ok: false, message: (err as Error).message };
   }
