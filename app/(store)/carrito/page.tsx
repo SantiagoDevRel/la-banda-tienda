@@ -12,7 +12,8 @@ import { formatCOP } from "@/lib/data";
 import { useCart } from "@/lib/cart";
 
 export default function CartPage() {
-  const { items, subtotal, total, count, ready, setQty, remove } = useCart();
+  const { items, subtotal, total, count, ready, setQty, remove, hasUnavailable } =
+    useCart();
 
   return (
     <div className="store-screen">
@@ -42,6 +43,7 @@ export default function CartPage() {
                     idx < items.length - 1
                       ? "1px solid var(--line-2)"
                       : "none",
+                  opacity: it.outOfStock ? 0.62 : 1,
                 }}
               >
                 <Link
@@ -106,6 +108,36 @@ export default function CartPage() {
                           Talla {it.size}
                         </div>
                       )}
+                      {it.outOfStock ? (
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                            marginTop: 6,
+                            padding: "2px 8px",
+                            borderRadius: 999,
+                            background: "rgba(185, 28, 28, 0.1)",
+                            color: "#b91c1c",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            letterSpacing: "0.02em",
+                          }}
+                        >
+                          Agotado · quitalo para continuar
+                        </div>
+                      ) : it.exceedsStock ? (
+                        <div
+                          style={{
+                            marginTop: 6,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: "#b45309",
+                          }}
+                        >
+                          Solo quedan {it.availableStock}. Ajustá la cantidad.
+                        </div>
+                      ) : null}
                     </div>
                     <button
                       type="button"
@@ -135,13 +167,23 @@ export default function CartPage() {
                       marginTop: 8,
                     }}
                   >
-                    <QtyStepper
-                      value={it.qty}
-                      onChange={(q) => setQty(it.productId, q, it.size)}
-                      min={1}
-                      max={it.product.stock || 1}
-                      size="sm"
-                    />
+                    {it.outOfStock ? (
+                      <button
+                        type="button"
+                        onClick={() => remove(it.productId, it.size)}
+                        className="lds-btn lds-btn-secondary lds-btn-sm"
+                      >
+                        Quitar del carrito
+                      </button>
+                    ) : (
+                      <QtyStepper
+                        value={it.qty}
+                        onChange={(q) => setQty(it.productId, q, it.size)}
+                        min={1}
+                        max={Math.max(1, it.availableStock)}
+                        size="sm"
+                      />
+                    )}
                     <Money value={it.lineTotal} size="sm" weight={700} />
                   </div>
                 </div>
@@ -205,14 +247,40 @@ export default function CartPage() {
               </span>
               <Money value={total} size="lg" weight={700} />
             </div>
-            <Link
-              href="/checkout"
-              className="lds-btn lds-btn-primary lds-btn-lg lds-btn-block"
-              style={{ marginTop: 14 }}
-            >
-              Ir a pagar
-              <Icon name="chevright" size={18} color="#fff" stroke={2} />
-            </Link>
+            {hasUnavailable ? (
+              <>
+                <button
+                  type="button"
+                  disabled
+                  className="lds-btn lds-btn-primary lds-btn-lg lds-btn-block"
+                  style={{ marginTop: 14, opacity: 0.5, cursor: "not-allowed" }}
+                >
+                  Ir a pagar
+                  <Icon name="chevright" size={18} color="#fff" stroke={2} />
+                </button>
+                <div
+                  style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    color: "#b91c1c",
+                    textAlign: "center",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Hay productos agotados o sin stock suficiente en tu carrito.
+                  Quitalos o ajustá la cantidad para continuar.
+                </div>
+              </>
+            ) : (
+              <Link
+                href="/checkout"
+                className="lds-btn lds-btn-primary lds-btn-lg lds-btn-block"
+                style={{ marginTop: 14 }}
+              >
+                Ir a pagar
+                <Icon name="chevright" size={18} color="#fff" stroke={2} />
+              </Link>
+            )}
           </div>
         </>
       )}

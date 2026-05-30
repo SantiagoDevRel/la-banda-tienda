@@ -42,7 +42,7 @@ const EMPTY: FormState = {
 };
 
 export default function CheckoutPage() {
-  const { items, subtotal, ready } = useCart();
+  const { items, subtotal, ready, hasUnavailable } = useCart();
   const router = useRouter();
   const [form, setForm] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
@@ -57,10 +57,12 @@ export default function CheckoutPage() {
   // productos por adelantado, así que el total es el subtotal.
   const total = subtotal;
 
-  // Empty cart → back to cart.
+  // Empty cart → back to cart. También si algún producto quedó agotado/sin
+  // stock suficiente: el carrito muestra el aviso claro y bloquea el avance.
   useEffect(() => {
-    if (ready && items.length === 0) router.replace("/carrito");
-  }, [ready, items.length, router]);
+    if (ready && (items.length === 0 || hasUnavailable))
+      router.replace("/carrito");
+  }, [ready, items.length, hasUnavailable, router]);
 
   // Prefill if the customer already started checkout.
   useEffect(() => {

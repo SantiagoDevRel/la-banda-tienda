@@ -20,6 +20,14 @@ const STORAGE_KEY = "lds-cart-v1";
 export interface CartItem extends CartLine {
   product: Product;
   lineTotal: number;
+  /** Stock disponible en este momento (snapshot del producto del server). */
+  availableStock: number;
+  /** Agotado: stock <= 0 o estado "out". No se puede comprar. */
+  outOfStock: boolean;
+  /** La cantidad en el carrito supera el stock disponible (pero hay algo). */
+  exceedsStock: boolean;
+  /** Cuánto de esta línea es realmente comprable: min(qty, stock) sin agotados. */
+  purchasableQty: number;
 }
 
 interface CartContextValue {
@@ -30,6 +38,8 @@ interface CartContextValue {
   total: number;
   shippingCost: number;
   freeShippingMin: number;
+  /** true si alguna línea está agotada o excede el stock → bloquea el checkout. */
+  hasUnavailable: boolean;
   ready: boolean;
   add: (productId: string, qty?: number, size?: string) => void;
   setQty: (productId: string, qty: number, size?: string) => void;
@@ -143,12 +153,31 @@ export function CartProvider({
       .map((l) => {
         const product = productMap.get(l.productId);
         if (!product) return null;
-        return { ...l, product, lineTotal: product.price * l.qty };
+        const availableStock = product.stock ?? 0;
+        // Agotado: sin stock o marcado "out" en el panel. Re-evaluado en CADA
+        // render con el stock actual del server → una línea agregada cuando
+        // había stock se marca agotada en cuanto el stock baja a 0.
+        const outOfStock = availableStock <= 0 || product.status === "out";
+        const purchasableQty = outOfStock
+          ? 0
+          : Math.min(l.qty, availableStock);
+        const exceedsStock = !outOfStock && l.qty > availableStock;
+        return {
+          ...l,
+          product,
+          availableStock,
+          outOfStock,
+          exceedsStock,
+          purchasableQty,
+          // El total de la línea cuenta solo lo comprable: un agotado suma $0.
+          lineTotal: product.price * purchasableQty,
+        };
       })
       .filter((x): x is CartItem => x !== null);
 
     const subtotal = items.reduce((s, it) => s + it.lineTotal, 0);
-    const count = items.reduce((s, it) => s + it.qty, 0);
+    const count = items.reduce((s, it) => s + it.purchasableQty, 0);
+    const hasUnavailable = items.some((it) => it.outOfStock || it.exceedsStock);
     // El envío se paga contra entrega (COD): no se cobra al hacer el pedido.
     // El cliente solo paga los productos por adelantado.
     const shipping = 0;
@@ -160,6 +189,7 @@ export function CartProvider({
       shipping,
       shippingCost,
       freeShippingMin,
+      hasUnavailable,
       total: subtotal + shipping,
       ready,
       add,

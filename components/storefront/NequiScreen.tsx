@@ -31,7 +31,8 @@ interface NequiScreenProps {
 }
 
 export function NequiScreen({ paymentMethods }: NequiScreenProps) {
-  const { items, subtotal, shipping, total, ready, clear } = useCart();
+  const { items, subtotal, shipping, total, ready, clear, hasUnavailable } =
+    useCart();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -147,6 +148,15 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
 
   async function confirmOrder() {
     if (!selectedFile || submitting) return;
+    // Última barrera en cliente antes de subir nada: si algún producto se agotó
+    // mientras el cliente estaba en el flujo, no dejamos confirmar. El server
+    // action vuelve a validar con stock fresco (es la barrera autoritativa).
+    if (hasUnavailable) {
+      setSubmitError(
+        "Uno o más productos de tu carrito se agotaron. Volvé al carrito para ajustarlo.",
+      );
+      return;
+    }
     if (needsArtwork && !artworkFile) {
       setSubmitError("Subí el diseño que querés en tu bombo.");
       return;
@@ -850,7 +860,12 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
           <button
             type="button"
             onClick={confirmOrder}
-            disabled={!selectedFile || (needsArtwork && !artworkFile) || submitting}
+            disabled={
+              !selectedFile ||
+              (needsArtwork && !artworkFile) ||
+              submitting ||
+              hasUnavailable
+            }
             className="lds-btn lds-btn-primary lds-btn-lg lds-btn-block"
           >
             {submitting ? "Confirmando…" : "Confirmar pedido"}

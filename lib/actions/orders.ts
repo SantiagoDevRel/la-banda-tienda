@@ -57,6 +57,50 @@ export async function createOrder(
 ): Promise<CreateOrderResult | CreateOrderError> {
   const supabase = await createClient();
 
+  // 0. AUTHORITATIVE stock check with FRESH data from the DB — BEFORE we upload
+  // anything or touch the RPC. A cart line is stale by nature: the customer may
+  // have added a product hours/days ago and the stock has since dropped to 0 (or
+  // below their quantity). localStorage keeps that line alive, so the client cart
+  // can NOT be trusted — we re-validate against the live `products.stock` here.
+  // (The create_order RPC is the race-safe atomic guard for concurrent drains;
+  // this is the friendly, fresh-data gate that catches the common case with a
+  // clear message and avoids uploading a screenshot for a doomed order.)
+  if (!cartItems || cartItems.length === 0) {
+    return { ok: false, message: "Tu carrito está vacío." };
+  }
+
+  const productIds = [...new Set(cartItems.map((it) => it.productId))];
+  const { data: stockRows, error: stockError } = await supabase
+    .from("products")
+    .select("id, name, stock, is_active")
+    .in("id", productIds);
+
+  if (stockError) {
+    console.error("[createOrder] stock check error:", stockError.message);
+    return {
+      ok: false,
+      message: "No pudimos verificar el inventario. Intentá de nuevo.",
+    };
+  }
+
+  const stockById = new Map((stockRows ?? []).map((r) => [r.id, r]));
+  const unavailable: string[] = [];
+  for (const it of cartItems) {
+    const row = stockById.get(it.productId);
+    // Unavailable if: product gone, soft-deleted, or not enough stock for the
+    // requested qty. `stock < quantity` already covers stock 0 (0 < 1).
+    if (!row || !row.is_active || it.quantity < 1 || row.stock < it.quantity) {
+      unavailable.push(row?.name ?? "Un producto");
+    }
+  }
+  if (unavailable.length > 0) {
+    const names = [...new Set(unavailable)].join(", ");
+    return {
+      ok: false,
+      message: `Ya no hay stock de: ${names}. Quitá ese producto del carrito para continuar.`,
+    };
+  }
+
   // 1. Upload payment screenshot
   const file = screenshotFile.get("screenshot") as File | null;
   if (!file) {
