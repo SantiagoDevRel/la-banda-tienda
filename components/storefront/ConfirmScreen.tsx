@@ -154,8 +154,8 @@ export function ConfirmScreen() {
               }}
             >
               Recibimos tu pedido, y desde ya comenzaremos a prepararlo. Te
-              pedimos paciencia, los envíos pueden tardar hasta 6 días hábiles,
-              pero no te preocupes,{" "}
+              pedimos paciencia, los envíos pueden tardar un poco, pero no te
+              preocupes,{" "}
               <strong style={{ color: "var(--ink)" }}>¡VALDRÁ LA PENA!</strong>
             </p>
             <p
