@@ -154,9 +154,9 @@ export function ConfirmScreen() {
               }}
             >
               Recibimos tu pedido, y desde ya comenzaremos a prepararlo. Te
-              pedimos paciencia, los envíos pueden tardar un poco, pero no te
-              preocupes,{" "}
-              <strong style={{ color: "var(--ink)" }}>¡VALDRÁ LA PENA!</strong>
+              pedimos paciencia, tenemos alto flujo de entregas, por lo que
+              nuestros tiempos de entrega pueden verse afectados. Verificaremos
+              tu pago y una vez lo realicemos te contactaremos de nuevo.
             </p>
             <p
               style={{
