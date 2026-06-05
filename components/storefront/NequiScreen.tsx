@@ -849,8 +849,9 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
                 lineHeight: 1.4,
               }}
             >
-              Verificamos el pago manualmente. Te avisamos por WhatsApp o correo
-              en menos de 12 horas.
+              Verificaremos el pago manualmente, una vez lo validemos te
+              avisaremos vía correo. Agradecemos su paciencia ya que podemos
+              tener muchos pedidos.
             </div>
           </div>
         </div>

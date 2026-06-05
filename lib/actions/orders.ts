@@ -9,7 +9,7 @@
 // confirmation screen and in the band's email).
 
 import { createClient } from "@/lib/supabase/server";
-import { sendNewOrderEmail } from "@/lib/email";
+import { sendNewOrderEmail, sendErrorAlertEmail } from "@/lib/email";
 import type { GlyphKind } from "@/lib/types";
 
 export interface OrderCartItem {
@@ -77,6 +77,11 @@ export async function createOrder(
 
   if (stockError) {
     console.error("[createOrder] stock check error:", stockError.message);
+    await sendErrorAlertEmail({
+      context: "createOrder / verificación de inventario",
+      errorMessage: stockError.message,
+      details: { customer: customer.name, email: customer.email, productIds },
+    });
     return {
       ok: false,
       message: "No pudimos verificar el inventario. Intentá de nuevo.",
@@ -116,6 +121,17 @@ export async function createOrder(
 
   if (uploadError) {
     console.error("[createOrder] upload error:", uploadError.message);
+    await sendErrorAlertEmail({
+      context: "createOrder / subir comprobante a Storage",
+      errorMessage: uploadError.message,
+      details: {
+        customer: customer.name,
+        email: customer.email,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+      },
+    });
     return {
       ok: false,
       message: "Error al subir el comprobante. Intentá de nuevo.",
@@ -165,6 +181,24 @@ export async function createOrder(
     console.error("[createOrder] RPC error:", rpcError?.message);
     // Clean up the uploaded file on failure
     await supabase.storage.from("payment-screenshots").remove([path]);
+    // ALERTA: este es el "Error al crear el pedido" que ven los clientes.
+    // Mandamos el error REAL de Postgres a la banda para poder diagnosticar.
+    await sendErrorAlertEmail({
+      context: "createOrder / RPC create_order",
+      errorMessage:
+        rpcError?.message ??
+        "El RPC create_order no devolvió filas (rpcData vacío).",
+      details: {
+        customer: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        deliveryMethod: customer.deliveryMethod,
+        items: rpcItems,
+        rpcCode: (rpcError as { code?: string } | null)?.code ?? null,
+        rpcDetails: (rpcError as { details?: string } | null)?.details ?? null,
+        rpcHint: (rpcError as { hint?: string } | null)?.hint ?? null,
+      },
+    });
     return {
       ok: false,
       message:

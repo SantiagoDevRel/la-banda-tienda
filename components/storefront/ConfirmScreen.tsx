@@ -153,10 +153,9 @@ export function ConfirmScreen() {
                 lineHeight: 1.55,
               }}
             >
-              Recibimos tu pedido, y desde ya comenzaremos a prepararlo. Te
-              pedimos paciencia, tenemos alto flujo de entregas, por lo que
-              nuestros tiempos de entrega pueden verse afectados. Verificaremos
-              tu pago y una vez lo realicemos te contactaremos de nuevo.
+              Verificaremos el pago manualmente, una vez lo validemos te
+              avisaremos vía correo. Agradecemos su paciencia ya que podemos
+              tener muchos pedidos.
             </p>
             <p
               style={{
@@ -212,8 +211,9 @@ export function ConfirmScreen() {
                 lineHeight: 1.5,
               }}
             >
-              Verificamos el pago y te contactamos en las próximas 12 horas por
-              WhatsApp o correo.
+              Verificaremos el pago manualmente, una vez lo validemos te
+              avisaremos vía correo. Agradecemos su paciencia ya que podemos
+              tener muchos pedidos.
             </p>
             <div
               style={{

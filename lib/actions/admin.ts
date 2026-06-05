@@ -4,7 +4,11 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { sendPaymentValidatedEmail, sendShippedEmail } from "@/lib/email";
+import {
+  sendPaymentValidatedEmail,
+  sendShippedEmail,
+  sendErrorAlertEmail,
+} from "@/lib/email";
 import { getStoreSettings } from "@/lib/queries";
 import type { Database } from "@/lib/database.types";
 
@@ -83,6 +87,28 @@ export async function updateOrderStatus(
     revalidatePath("/admin/ordenes");
     revalidatePath("/admin");
 
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, message: (err as Error).message };
+  }
+}
+
+/**
+ * Dispara una ALERTA DE PRUEBA al correo de la banda para confirmar que el
+ * pipeline de emails de error funciona (RESEND_API_KEY seteada, destinatario
+ * correcto). Admin-gated. Úsala una vez tras configurar Resend en Vercel.
+ */
+export async function sendTestErrorAlert(): Promise<
+  { ok: true } | { ok: false; message: string }
+> {
+  try {
+    await requireAdmin();
+    await sendErrorAlertEmail({
+      context: "PRUEBA manual desde el panel admin",
+      errorMessage:
+        "Esto es una alerta de PRUEBA. Si la recibís, las alertas de error funcionan.",
+      details: { disparada_por: "admin", nota: "Ignorar — es solo un test." },
+    });
     return { ok: true };
   } catch (err) {
     return { ok: false, message: (err as Error).message };

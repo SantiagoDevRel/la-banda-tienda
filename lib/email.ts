@@ -33,6 +33,11 @@ interface OrderEmailData {
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFY_EMAIL ?? "";
+// Destinatario de las ALERTAS DE ERROR (separado del email de pedidos).
+// Default: el correo de la banda que revisa Jeison. Override con ERROR_ALERT_EMAIL.
+const ERROR_ALERT_EMAIL =
+  (process.env.ERROR_ALERT_EMAIL && process.env.ERROR_ALERT_EMAIL.trim()) ||
+  "labandadelosdelsur1997@gmail.com";
 // Resend's onboarding sender works without verifying a domain — safe default.
 const FROM_EMAIL =
   (process.env.EMAIL_FROM && process.env.EMAIL_FROM.trim()) ||
@@ -233,5 +238,80 @@ Gracias por comprar en Tienda La Banda. 💚
     }
   } catch (err) {
     console.error("[email] sendShippedEmail threw:", err);
+  }
+}
+
+/**
+ * ALERTA DE ERROR — manda un correo a la banda (Jeison) cuando algo falla en
+ * el flujo crítico (crear pedido, subir comprobante, etc.). Así un error que
+ * antes solo quedaba en los logs del servidor (invisible para Santi/Jeison)
+ * ahora llega al inbox con el detalle real para poder reaccionar.
+ *
+ * NUNCA lanza: si Resend no está configurado o falla, solo loguea. No debe
+ * romper el flujo que la llamó (ya está en un camino de error de por sí).
+ */
+export async function sendErrorAlertEmail(alert: {
+  /** Dónde ocurrió, ej: "createOrder / RPC create_order" */
+  context: string;
+  /** Mensaje de error real (rpcError.message, etc.) */
+  errorMessage: string;
+  /** Datos extra para entender el caso (cliente, items, paths…). */
+  details?: Record<string, unknown>;
+}): Promise<void> {
+  if (!resend) {
+    console.log(
+      `[email] RESEND_API_KEY not set — skipping error alert (${alert.context})`,
+    );
+    return;
+  }
+
+  const detailLines = alert.details
+    ? Object.entries(alert.details)
+        .map(([k, v]) => {
+          let val: string;
+          try {
+            val =
+              typeof v === "string" ? v : JSON.stringify(v, null, 0);
+          } catch {
+            val = String(v);
+          }
+          if (val && val.length > 800) val = val.slice(0, 800) + "… (cortado)";
+          return `• ${k}: ${val}`;
+        })
+        .join("\n")
+    : "(sin detalles)";
+
+  try {
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: ERROR_ALERT_EMAIL,
+      subject: `⚠️ Error en la tienda — ${alert.context}`,
+      text: `
+Se detectó un error en la Tienda La Banda.
+
+¿Dónde?  ${alert.context}
+
+Error:
+${alert.errorMessage}
+
+Detalles:
+${detailLines}
+
+—
+Reenviale esto a Santi para que lo revise.
+🎶 La Banda de Los Del Sur
+`.trim(),
+    });
+
+    if (result.error) {
+      console.error("[email] Resend rejected the error alert:", result.error);
+    } else {
+      console.log(
+        `[email] error alert sent (${alert.context}), id=${result.data?.id}`,
+      );
+    }
+  } catch (err) {
+    // Si hasta la alerta falla, solo logueamos — no propagamos.
+    console.error("[email] sendErrorAlertEmail threw:", err);
   }
 }
