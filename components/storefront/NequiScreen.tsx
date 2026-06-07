@@ -31,6 +31,18 @@ const STEPS = [
   "Subila acá abajo y confirmá.",
 ];
 
+// Extensiones que tratamos como imagen aunque el navegador no mande MIME.
+const IMAGE_EXT = /\.(jpe?g|png|heic|heif|webp|gif|bmp|tiff?)$/i;
+
+// ¿El archivo parece una imagen? IMPORTANTE: varios navegadores de Android
+// devuelven `type` VACÍO para fotos de la galería/cámara. Si rechazábamos por
+// `!type.startsWith("image/")`, esos clientes NO podían subir el comprobante
+// ("no se activó la parte para subir"). Aceptamos por MIME, por extensión, o
+// si el type viene vacío (la compresión/subida lo maneja igual).
+function looksLikeImage(f: File): boolean {
+  return f.type.startsWith("image/") || f.type === "" || IMAGE_EXT.test(f.name);
+}
+
 interface NequiScreenProps {
   paymentMethods: PaymentMethod[];
 }
@@ -88,8 +100,8 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!f.type.startsWith("image/")) {
-      setFileError("El archivo debe ser una imagen (JPG o PNG).");
+    if (!looksLikeImage(f)) {
+      setFileError("El archivo debe ser una imagen (JPG, PNG o HEIC).");
       return;
     }
     if (f.size > 15 * 1024 * 1024) {
@@ -109,8 +121,8 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
   async function onArtwork(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!f.type.startsWith("image/")) {
-      setFileError("El diseño debe ser una imagen (JPG o PNG).");
+    if (!looksLikeImage(f)) {
+      setFileError("El diseño debe ser una imagen (JPG, PNG o HEIC).");
       return;
     }
     if (f.size > 15 * 1024 * 1024) {
@@ -819,7 +831,7 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
                 Subí el pantallazo del pago
               </span>
               <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                JPG o PNG · hasta 5 MB
+                Foto del comprobante (JPG, PNG o HEIC)
               </span>
             </button>
           )}
