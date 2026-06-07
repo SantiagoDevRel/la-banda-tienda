@@ -1,7 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async headers() {
+    return [
+      {
+        // Fondo de video + posters: cachear fuerte en el browser para que una
+        // visita repetida NO vuelva a descargar los MB. Reduce el Fast Data
+        // Transfer de Vercel en visitantes recurrentes. (Si algún día se
+        // cambia un clip, renombralo bg-10.mp4 etc. para romper la caché.)
+        source: "/video/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
