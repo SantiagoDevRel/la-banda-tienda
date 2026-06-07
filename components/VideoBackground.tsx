@@ -20,32 +20,11 @@ export function VideoBackground() {
   // Pick a random starting clip after mount (keeps SSR/CSR markup in sync).
   useEffect(() => {
     setIndex(Math.floor(Math.random() * BG_CLIPS.length));
-
-    // ¿Reproducimos video o mostramos SOLO el poster (imagen ~100 KB)?
-    // NO reproducimos video si:
-    //  - el usuario pidió menos movimiento (prefers-reduced-motion), o
-    //  - es una pantalla chica / celular (la mayoría del tráfico), o
-    //  - el navegador está en modo ahorro de datos (Save-Data).
-    // Cada clip pesa 3-6 MB y antes se auto-encadenaban → era el driver del
-    // bandwidth de Vercel. En celular el poster se ve igual de bien y pesa nada.
-    const reduceMotionMq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const mobileMq = window.matchMedia("(max-width: 768px)");
-    const saveData =
-      (navigator as Navigator & { connection?: { saveData?: boolean } })
-        .connection?.saveData === true;
-
-    const compute = () =>
-      setAllowVideo(
-        !reduceMotionMq.matches && !mobileMq.matches && !saveData,
-      );
-    compute();
-
-    reduceMotionMq.addEventListener("change", compute);
-    mobileMq.addEventListener("change", compute);
-    return () => {
-      reduceMotionMq.removeEventListener("change", compute);
-      mobileMq.removeEventListener("change", compute);
-    };
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setAllowVideo(!mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setAllowVideo(!e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
   }, []);
 
   // On clip change: fade out, reload the new source, start playback.
@@ -83,9 +62,9 @@ export function VideoBackground() {
           muted
           playsInline
           autoPlay
-          loop
           preload="auto"
           onCanPlay={() => setVisible(true)}
+          onEnded={() => setIndex((i) => (i + 1) % BG_CLIPS.length)}
           onError={() => setVisible(false)}
         />
       )}

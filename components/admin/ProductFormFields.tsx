@@ -76,7 +76,10 @@ export function ProductFormFields({ editProduct, editImages = [] }: Props) {
 
     const entries: NewImageEntry[] = [];
     for (const f of files) {
-      const compressed = await compressImage(f);
+      // Fotos de producto: 1080px / calidad 0.72 — se ven igual de bien en la
+      // tienda (mobile) y pesan ~40% menos que el default → menos egress de
+      // Supabase Storage en cada visita al catálogo.
+      const compressed = await compressImage(f, 1080, 0.72);
       const previewUrl = URL.createObjectURL(compressed);
       entries.push({ file: compressed, previewUrl });
     }
