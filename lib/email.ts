@@ -250,6 +250,17 @@ Gracias por comprar en Tienda La Banda. 💚
  * NUNCA lanza: si Resend no está configurado o falla, solo loguea. No debe
  * romper el flujo que la llamó (ya está en un camino de error de por sí).
  */
+// ── Dedup de alertas de error ───────────────────────────────────────────────
+// Evita que un mismo fallo, reintentado por el cliente varias veces seguidas,
+// genere 15 correos idénticos. Guarda en memoria del proceso (módulo) la última
+// vez que se envió cada "fingerprint" (context + mensaje) y suprime repetidos
+// dentro de una ventana. Con Fluid Compute la instancia se reutiliza entre
+// requests, así que una ráfaga del mismo cliente cae en la misma instancia y se
+// deduplica. No es 100% a prueba de balas entre instancias frías, pero corta el
+// 99% del spam real (ráfagas) a costo cero (sin tabla ni infra extra).
+const ALERT_DEDUP_WINDOW_MS = 10 * 60 * 1000; // 10 minutos
+const lastAlertSentAt = new Map<string, number>();
+
 export async function sendErrorAlertEmail(alert: {
   /** Dónde ocurrió, ej: "createOrder / RPC create_order" */
   context: string;
@@ -264,6 +275,20 @@ export async function sendErrorAlertEmail(alert: {
     );
     return;
   }
+
+  // Dedup: mismo contexto + mismo mensaje dentro de la ventana → no reenviar.
+  const fingerprint = `${alert.context}::${alert.errorMessage}`;
+  const now = Date.now();
+  const prev = lastAlertSentAt.get(fingerprint);
+  if (prev && now - prev < ALERT_DEDUP_WINDOW_MS) {
+    console.log(
+      `[email] error alert deduped (${alert.context}) — ya enviado hace ${Math.round(
+        (now - prev) / 1000,
+      )}s`,
+    );
+    return;
+  }
+  lastAlertSentAt.set(fingerprint, now);
 
   const detailLines = alert.details
     ? Object.entries(alert.details)

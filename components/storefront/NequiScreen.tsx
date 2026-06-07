@@ -18,6 +18,11 @@ import { useCart } from "@/lib/cart";
 import { saveLastOrder } from "@/lib/lastOrder";
 import { createOrder } from "@/lib/actions/orders";
 import { compressImage } from "@/lib/imageCompress";
+import {
+  readCheckout,
+  clearCheckout,
+  isCheckoutComplete,
+} from "@/lib/checkoutStore";
 import type { PaymentMethod } from "@/lib/queries";
 
 const STEPS = [
@@ -57,24 +62,10 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
   } | null>(null);
 
   // Read the checkout data — the delivery method drives the displayed total.
+  // Viene de localStorage (sobrevive a que el cliente salga a la app del banco
+  // y vuelva). Si no hay datos, `checkout` queda null y confirmOrder lo ataja.
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem("lds-checkout");
-      if (raw) {
-        const p = JSON.parse(raw);
-        setCheckout({
-          name: p.name ?? "",
-          email: p.email ?? "",
-          phone: p.phone ?? "",
-          addr: p.addr ?? "",
-          city: p.city ?? "",
-          department: p.department ?? "",
-          deliveryMethod: p.deliveryMethod === "pickup" ? "pickup" : "shipping",
-        });
-      }
-    } catch {
-      /* ignore */
-    }
+    setCheckout(readCheckout());
   }, []);
 
   const isPickup = checkout?.deliveryMethod === "pickup";
@@ -147,32 +138,41 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
   }
 
   async function confirmOrder() {
-    if (!selectedFile || submitting) return;
-    // Última barrera en cliente antes de subir nada: si algún producto se agotó
-    // mientras el cliente estaba en el flujo, no dejamos confirmar. El server
-    // action vuelve a validar con stock fresco (es la barrera autoritativa).
+    if (submitting) return;
+
+    // GUARD CLAVE: si se perdieron los datos del cliente (p. ej. el navegador
+    // del celular descartó la pestaña mientras pagaba y volvió con el storage
+    // vacío), NO intentamos crear el pedido — eso reventaba con "Falta el
+    // nombre" y disparaba un correo de error. Lo mandamos a recargar sus datos.
+    if (!isCheckoutComplete(checkout)) {
+      setSubmitError(
+        "Se perdieron tus datos de envío. Te llevamos a completarlos de nuevo…",
+      );
+      window.setTimeout(() => router.push("/checkout"), 1400);
+      return;
+    }
+
+    // Mensajes específicos por cada cosa que falte (el botón ya NO se
+    // deshabilita en silencio — así el cliente siempre sabe qué le falta).
     if (hasUnavailable) {
       setSubmitError(
         "Uno o más productos de tu carrito se agotaron. Volvé al carrito para ajustarlo.",
       );
       return;
     }
-    if (needsArtwork && !artworkFile) {
-      setSubmitError("Subí el diseño que querés en tu bombo.");
+    if (!selectedFile) {
+      setSubmitError("Subí el pantallazo del pago para confirmar.");
       return;
     }
+    if (needsArtwork && !artworkFile) {
+      setSubmitError("Subí el diseño que querés en tu bombo para confirmar.");
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError("");
 
-    const c = checkout ?? {
-      name: "",
-      email: "",
-      phone: "",
-      addr: "",
-      city: "",
-      department: "",
-      deliveryMethod: "shipping" as const,
-    };
+    const c = checkout;
 
     const formData = new FormData();
     formData.set("screenshot", selectedFile);
@@ -214,6 +214,7 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
       deliveryMethod: c.deliveryMethod,
     });
 
+    clearCheckout();
     clear();
     router.push("/pedido/confirmado");
   }
@@ -858,15 +859,13 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
 
         {/* CTA */}
         <div className="store-cta">
+          {/* El botón ya NO se deshabilita por falta de pantallazo/diseño/stock:
+              eso dejaba al cliente sin saber qué pasaba ("no me deja avanzar").
+              confirmOrder valida y muestra el mensaje exacto de lo que falta. */}
           <button
             type="button"
             onClick={confirmOrder}
-            disabled={
-              !selectedFile ||
-              (needsArtwork && !artworkFile) ||
-              submitting ||
-              hasUnavailable
-            }
+            disabled={submitting}
             className="lds-btn lds-btn-primary lds-btn-lg lds-btn-block"
           >
             {submitting ? "Confirmando…" : "Confirmar pedido"}

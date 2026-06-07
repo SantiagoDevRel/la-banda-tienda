@@ -15,6 +15,7 @@ import { Combobox } from "@/components/storefront/Combobox";
 import { formatCOP } from "@/lib/data";
 import { useCart } from "@/lib/cart";
 import { DEPARTAMENTOS, ciudadesDe } from "@/lib/colombia";
+import { saveCheckout, readCheckout } from "@/lib/checkoutStore";
 
 type DeliveryMethod = "shipping" | "pickup";
 
@@ -66,12 +67,8 @@ export default function CheckoutPage() {
 
   // Prefill if the customer already started checkout.
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem("lds-checkout");
-      if (raw) setForm({ ...EMPTY, ...JSON.parse(raw) });
-    } catch {
-      /* ignore */
-    }
+    const saved = readCheckout();
+    if (saved) setForm({ ...EMPTY, ...saved });
   }, []);
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -119,11 +116,7 @@ export default function CheckoutPage() {
       ...form,
       deliveryMethod: isPickup ? "pickup" : "shipping",
     };
-    try {
-      sessionStorage.setItem("lds-checkout", JSON.stringify(payload));
-    } catch {
-      /* ignore */
-    }
+    saveCheckout(payload);
     router.push("/checkout/pago");
   }
 

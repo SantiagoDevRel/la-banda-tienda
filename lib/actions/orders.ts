@@ -69,6 +69,40 @@ export async function createOrder(
     return { ok: false, message: "Tu carrito está vacío." };
   }
 
+  // 0a. VALIDACIÓN de los datos del cliente — ANTES de subir el comprobante o
+  // tocar el RPC. Si el cliente perdió sus datos (p. ej. el navegador del
+  // celular descartó la pestaña mientras pagaba en la app del banco y volvió
+  // con sessionStorage vacío), el nombre/correo llegan vacíos y el RPC
+  // create_order revienta con "Falta el nombre del comprador" (P0001).
+  // Eso NO es un fallo del sistema: es input incompleto. Lo atajamos acá con
+  // un mensaje claro y, CLAVE, SIN mandar correo de alerta a la banda (era la
+  // fuente del spam de ~15 correos iguales por un cliente reintentando).
+  const name = (customer.name ?? "").trim();
+  const email = (customer.email ?? "").trim();
+  const phone = (customer.phone ?? "").trim();
+  const city = (customer.city ?? "").trim();
+  const department = (customer.department ?? "").trim();
+  const address = (customer.address ?? "").trim();
+  const isShipping = customer.deliveryMethod !== "pickup";
+
+  const missing =
+    !name ||
+    !email ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+    !phone ||
+    !city ||
+    !department ||
+    (isShipping && !address);
+
+  if (missing) {
+    // OJO: no se envía sendErrorAlertEmail — es input del usuario, no un bug.
+    return {
+      ok: false,
+      message:
+        "Se perdieron algunos de tus datos. Volvé a 'Tus datos' y completá nombre, correo, celular y dirección para confirmar el pedido.",
+    };
+  }
+
   const productIds = [...new Set(cartItems.map((it) => it.productId))];
   const { data: stockRows, error: stockError } = await supabase
     .from("products")
@@ -165,12 +199,12 @@ export async function createOrder(
   }));
 
   const { data: rpcData, error: rpcError } = await supabase.rpc("create_order", {
-    p_customer_name: customer.name,
-    p_customer_email: customer.email,
-    p_customer_phone: customer.phone,
-    p_customer_address: customer.address,
-    p_customer_city: customer.city,
-    p_customer_department: customer.department,
+    p_customer_name: name,
+    p_customer_email: email,
+    p_customer_phone: phone,
+    p_customer_address: address,
+    p_customer_city: city,
+    p_customer_department: department,
     p_delivery_method: customer.deliveryMethod,
     p_items: rpcItems,
     p_screenshot_path: path,
@@ -179,8 +213,9 @@ export async function createOrder(
 
   if (rpcError || !rpcData || rpcData.length === 0) {
     console.error("[createOrder] RPC error:", rpcError?.message);
-    // Clean up the uploaded file on failure
-    await supabase.storage.from("payment-screenshots").remove([path]);
+    // Clean up the uploaded file(s) on failure — pantallazo + diseño del bombo.
+    const toRemove = artworkPath ? [path, artworkPath] : [path];
+    await supabase.storage.from("payment-screenshots").remove(toRemove);
     // ALERTA: este es el "Error al crear el pedido" que ven los clientes.
     // Mandamos el error REAL de Postgres a la banda para poder diagnosticar.
     await sendErrorAlertEmail({
@@ -270,9 +305,9 @@ export async function createOrder(
     await sendNewOrderEmail({
       orderNumber: new_order_number,
       orderId: new_order_id,
-      customerName: customer.name,
-      customerEmail: customer.email,
-      customerPhone: customer.phone,
+      customerName: name,
+      customerEmail: email,
+      customerPhone: phone,
       deliveryMethod: customer.deliveryMethod,
       items,
       total,
