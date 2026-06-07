@@ -11,8 +11,13 @@ import { Money } from "@/components/ui";
 import { StoreHeader } from "@/components/StoreHeader";
 import { formatCOP } from "@/lib/data";
 import { readLastOrder, type LastOrder } from "@/lib/lastOrder";
+import { DEFAULT_MESSAGES, type StoreMessages } from "@/lib/messages";
 
-export function ConfirmScreen() {
+export function ConfirmScreen({
+  messages = DEFAULT_MESSAGES,
+}: {
+  messages?: StoreMessages;
+}) {
   const [order, setOrder] = useState<LastOrder | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [showPopup, setShowPopup] = useState(true);
@@ -143,7 +148,7 @@ export function ConfirmScreen() {
             </div>
 
             <h2 style={{ fontSize: 20, marginTop: 14, color: "var(--ink)" }}>
-              ¡¡Ey Gracias por apoyarnos!!
+              {messages.popupTitulo}
             </h2>
             <p
               style={{
@@ -151,11 +156,10 @@ export function ConfirmScreen() {
                 color: "var(--ink-2)",
                 marginTop: 10,
                 lineHeight: 1.55,
+                whiteSpace: "pre-line",
               }}
             >
-              Verificaremos el pago manualmente, una vez lo validemos te
-              avisaremos vía correo. Agradecemos su paciencia ya que podemos
-              tener muchos pedidos.
+              {messages.postCompra}
             </p>
             <p
               style={{
@@ -165,9 +169,10 @@ export function ConfirmScreen() {
                 fontWeight: 600,
                 fontFamily: "var(--font-display)",
                 lineHeight: 1.4,
+                whiteSpace: "pre-line",
               }}
             >
-              La Banda de Los del Sur — Hay Fiesta en la Popular.
+              {messages.marca}
             </p>
 
             <button
@@ -209,11 +214,10 @@ export function ConfirmScreen() {
                 color: "var(--ink-2)",
                 marginTop: 8,
                 lineHeight: 1.5,
+                whiteSpace: "pre-line",
               }}
             >
-              Verificaremos el pago manualmente, una vez lo validemos te
-              avisaremos vía correo. Agradecemos su paciencia ya que podemos
-              tener muchos pedidos.
+              {messages.postCompra}
             </p>
             <div
               style={{
@@ -369,9 +373,10 @@ export function ConfirmScreen() {
                       fontSize: 12.5,
                       color: "var(--accent-ink)",
                       marginTop: 2,
+                      whiteSpace: "pre-line",
                     }}
                   >
-                    Debes pagar el valor del envío al momento de recibir.
+                    {messages.envioContraentrega}
                   </div>
                 </div>
               </div>

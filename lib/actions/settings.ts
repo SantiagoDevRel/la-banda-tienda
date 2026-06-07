@@ -27,6 +27,22 @@ export async function saveSettings(
       .replace(/\./g, "")
       .replace(",", "");
 
+    // Mensajes editables: solo se actualizan si el form los manda (así otros
+    // forms/llamadas no los pisan). Cada uno cae a su valor actual si falta.
+    const msgFields: Record<string, string> = {};
+    const msgKeys: Array<[string, string]> = [
+      ["msgPostCompra", "msg_post_compra"],
+      ["msgPopupTitulo", "msg_popup_titulo"],
+      ["msgMarca", "msg_marca"],
+      ["msgEnvioContraentrega", "msg_envio_contraentrega"],
+      ["emailPagoValidado", "email_pago_validado"],
+      ["emailEnviado", "email_enviado"],
+    ];
+    for (const [formKey, col] of msgKeys) {
+      const v = formData.get(formKey);
+      if (typeof v === "string") msgFields[col] = v;
+    }
+
     const { error } = await supabase
       .from("store_settings")
       .update({
@@ -35,6 +51,7 @@ export async function saveSettings(
         shipping_info: formData.get("shippingInfo") as string,
         shipping_cost: parseInt(shippingCostRaw, 10),
         free_shipping_min: parseInt(freeShippingMinRaw, 10),
+        ...msgFields,
       })
       .eq("id", true); // single row, id is a boolean constant
 
@@ -44,6 +61,8 @@ export async function saveSettings(
 
     revalidatePath("/admin/ajustes");
     revalidatePath("/checkout/pago");
+    revalidatePath("/pedido/confirmado");
+    revalidatePath("/");
 
     return { ok: true };
   } catch (err) {

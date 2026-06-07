@@ -4,6 +4,7 @@
 
 import { Resend } from "resend";
 import { formatCOP } from "@/lib/data";
+import { DEFAULT_MESSAGES, renderTemplate } from "@/lib/messages";
 import type { GlyphKind } from "@/lib/types";
 
 /** Adjunto del correo (ya en base64) — comprobante de pago y/o diseño del bombo. */
@@ -130,6 +131,8 @@ export async function sendPaymentValidatedEmail(order: {
   orderNumber: number;
   customerEmail: string;
   total: number;
+  /** Plantilla editable desde Ajustes. Placeholders: {pedido} {total}. */
+  bodyTemplate?: string;
 }): Promise<EmailSendResult> {
   if (!resend) {
     console.log(
@@ -146,24 +149,18 @@ export async function sendPaymentValidatedEmail(order: {
     `[email] sending payment-validated #${order.orderNumber}  from="${FROM_EMAIL}"  to="${order.customerEmail}"`,
   );
 
+  const tpl = order.bodyTemplate ?? DEFAULT_MESSAGES.emailPagoValidado;
+  const body = renderTemplate(tpl, {
+    pedido: order.orderNumber,
+    total: formatCOP(order.total),
+  });
+
   try {
     const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: order.customerEmail,
       subject: `Validamos el pago de tu pedido #${order.orderNumber} — La Banda`,
-      text: `
-Hola, esperamos que estes muy bien.
-
-✅ Ya validamos el pago de tu pedido #${order.orderNumber} (${formatCOP(order.total)}).
-
-🕰️👐 Les pedimos paciencia, tenemos demasiados pedidos, el tiempo estimado de entrega es de 6 días hábiles aproximadamente, pero no te preocupes ¡VALDRÀ LA PENA!
-
-📱Si deseas nos Regalas tu número de Wsp para contactarte una vez tengamos listo tu pedido y así poder pactar la entrega de forma más ágil, sino no hay lío, nos avisas y te volvemos a contactar por acá.
-
-Gracias por apoyarnos.
-
-🎶La Banda de Los Del Sur - Hay Fiesta en la Popular🎶
-`.trim(),
+      text: body,
     });
 
     if (result.error) {
@@ -198,6 +195,8 @@ export async function sendShippedEmail(order: {
   customerName: string;
   customerEmail: string;
   whatsapp?: string;
+  /** Plantilla editable desde Ajustes. Placeholders: {nombre} {pedido} {whatsapp}. */
+  bodyTemplate?: string;
 }): Promise<void> {
   if (!resend) {
     console.log(
@@ -210,20 +209,19 @@ export async function sendShippedEmail(order: {
     `[email] sending shipped #${order.orderNumber}  from="${FROM_EMAIL}"  to="${order.customerEmail}"`,
   );
 
+  const tpl = order.bodyTemplate ?? DEFAULT_MESSAGES.emailEnviado;
+  const body = renderTemplate(tpl, {
+    nombre: order.customerName,
+    pedido: order.orderNumber,
+    whatsapp: order.whatsapp ?? "",
+  });
+
   try {
     const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: order.customerEmail,
       subject: `¡Tu pedido #${order.orderNumber} fue enviado! — La Banda`,
-      text: `
-Hola ${order.customerName},
-
-¡Buenas noticias! Tu pedido #${order.orderNumber} ya fue enviado y está en camino.
-
-Si tenés alguna pregunta, escribinos por WhatsApp${order.whatsapp ? `: ${order.whatsapp}` : "."}.
-
-Gracias por comprar en Tienda La Banda. 💚
-`.trim(),
+      text: body,
     });
 
     if (result.error) {

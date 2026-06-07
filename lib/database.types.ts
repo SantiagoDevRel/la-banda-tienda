@@ -271,6 +271,12 @@ export type Database = {
           store_name: string;
           updated_at: string;
           whatsapp: string;
+          msg_post_compra: string;
+          msg_popup_titulo: string;
+          msg_marca: string;
+          msg_envio_contraentrega: string;
+          email_pago_validado: string;
+          email_enviado: string;
         };
         Insert: {
           free_shipping_min?: number;
@@ -282,6 +288,12 @@ export type Database = {
           store_name?: string;
           updated_at?: string;
           whatsapp?: string;
+          msg_post_compra?: string;
+          msg_popup_titulo?: string;
+          msg_marca?: string;
+          msg_envio_contraentrega?: string;
+          email_pago_validado?: string;
+          email_enviado?: string;
         };
         Update: {
           free_shipping_min?: number;
@@ -293,6 +305,12 @@ export type Database = {
           store_name?: string;
           updated_at?: string;
           whatsapp?: string;
+          msg_post_compra?: string;
+          msg_popup_titulo?: string;
+          msg_marca?: string;
+          msg_envio_contraentrega?: string;
+          email_pago_validado?: string;
+          email_enviado?: string;
         };
         Relationships: [];
       };

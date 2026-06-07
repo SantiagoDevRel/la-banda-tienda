@@ -77,6 +77,7 @@ export async function updateOrderStatus(
           customerName: order.customer_name,
           customerEmail: order.customer_email,
           whatsapp: settings.whatsapp,
+          bodyTemplate: settings.messages.emailEnviado,
         }).catch((err) =>
           console.error("[updateOrderStatus] email failed:", err),
         );
@@ -165,10 +166,12 @@ export async function setPaymentValidated(
 
     // Esperamos el resultado real para mostrarle al admin si Resend aceptó
     // o rechazó (típico: sender no verificado, sandbox limitando destinatarios).
+    const settings = await getStoreSettings();
     const sendRes = await sendPaymentValidatedEmail({
       orderNumber: order.order_number,
       customerEmail: order.customer_email,
       total: order.total,
+      bodyTemplate: settings.messages.emailPagoValidado,
     });
 
     if (sendRes.ok) {

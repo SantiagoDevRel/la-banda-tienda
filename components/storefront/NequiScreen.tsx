@@ -20,6 +20,7 @@ import { createOrder } from "@/lib/actions/orders";
 import { compressImage } from "@/lib/imageCompress";
 import { isCheckoutComplete } from "@/lib/checkoutStore";
 import { useCheckout } from "@/lib/checkout-context";
+import { DEFAULT_MESSAGES, type StoreMessages } from "@/lib/messages";
 import type { PaymentMethod } from "@/lib/queries";
 
 const STEPS = [
@@ -42,9 +43,13 @@ function looksLikeImage(f: File): boolean {
 
 interface NequiScreenProps {
   paymentMethods: PaymentMethod[];
+  messages?: StoreMessages;
 }
 
-export function NequiScreen({ paymentMethods }: NequiScreenProps) {
+export function NequiScreen({
+  paymentMethods,
+  messages = DEFAULT_MESSAGES,
+}: NequiScreenProps) {
   const { items, subtotal, shipping, total, ready, clear, hasUnavailable } =
     useCart();
   const router = useRouter();
@@ -326,9 +331,10 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
                     fontSize: 13,
                     color: "var(--accent-ink)",
                     marginTop: 2,
+                    whiteSpace: "pre-line",
                   }}
                 >
-                  Debes pagar el valor del envío al momento de recibir.
+                  {messages.envioContraentrega}
                 </div>
               </div>
             </div>
@@ -846,11 +852,10 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
                 fontSize: 12,
                 color: "var(--ink-2)",
                 lineHeight: 1.4,
+                whiteSpace: "pre-line",
               }}
             >
-              Verificaremos el pago manualmente, una vez lo validemos te
-              avisaremos vía correo. Agradecemos su paciencia ya que podemos
-              tener muchos pedidos.
+              {messages.postCompra}
             </div>
           </div>
         </div>

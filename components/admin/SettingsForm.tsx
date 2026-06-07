@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Icon } from "@/components/icons";
 import { saveSettings } from "@/lib/actions/settings";
+import type { StoreMessages } from "@/lib/messages";
 
 interface SettingsFormProps {
   settings: {
@@ -11,6 +12,7 @@ interface SettingsFormProps {
     shippingInfo: string;
     shippingCost: number;
     freeShippingMin: number;
+    messages: StoreMessages;
   };
 }
 
@@ -144,6 +146,67 @@ export function SettingsForm({ settings }: SettingsFormProps) {
           </div>
         </div>
 
+        {/* Mensajes de la tienda */}
+        <div
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--line)",
+            borderRadius: "var(--r-lg)",
+            padding: 22,
+          }}
+        >
+          <div style={{ fontSize: 15, fontWeight: 700 }}>
+            Mensajes de la tienda
+          </div>
+          <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
+            Textos que ven los clientes. Editá lo que quieras; si lo dejás igual,
+            se muestra tal cual está.
+          </div>
+
+          <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 16 }}>
+            <MsgField
+              label="Mensaje después de comprar"
+              hint="Aparece en el popup de gracias, la pantalla de confirmación y la pantalla de pago."
+              name="msgPostCompra"
+              rows={3}
+              defaultValue={settings.messages.postCompra}
+            />
+            <MsgField
+              label="Título del popup de gracias"
+              name="msgPopupTitulo"
+              rows={1}
+              defaultValue={settings.messages.popupTitulo}
+            />
+            <MsgField
+              label="Frase de la banda (popup)"
+              name="msgMarca"
+              rows={1}
+              defaultValue={settings.messages.marca}
+            />
+            <MsgField
+              label="Aviso de envío contraentrega"
+              hint="Se muestra en el pago y la confirmación cuando es envío a domicilio."
+              name="msgEnvioContraentrega"
+              rows={2}
+              defaultValue={settings.messages.envioContraentrega}
+            />
+            <MsgField
+              label="Correo: pago validado"
+              hint="Se envía al cliente cuando marcás el pago como validado. Podés usar {pedido} y {total}."
+              name="emailPagoValidado"
+              rows={8}
+              defaultValue={settings.messages.emailPagoValidado}
+            />
+            <MsgField
+              label="Correo: pedido enviado"
+              hint="Se envía al cliente cuando marcás el pedido como enviado. Podés usar {nombre}, {pedido} y {whatsapp}."
+              name="emailEnviado"
+              rows={6}
+              defaultValue={settings.messages.emailEnviado}
+            />
+          </div>
+        </div>
+
         {/* Save */}
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
           {saved && (
@@ -174,5 +237,36 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         </div>
       </div>
     </form>
+  );
+}
+
+function MsgField({
+  label,
+  hint,
+  name,
+  rows,
+  defaultValue,
+}: {
+  label: string;
+  hint?: string;
+  name: string;
+  rows: number;
+  defaultValue: string;
+}) {
+  return (
+    <div>
+      <label className="lds-label">{label}</label>
+      {hint && (
+        <div style={{ fontSize: 11, color: "var(--ink-3)", marginBottom: 6 }}>
+          {hint}
+        </div>
+      )}
+      <textarea
+        className="lds-textarea"
+        name={name}
+        rows={rows}
+        defaultValue={defaultValue}
+      />
+    </div>
   );
 }

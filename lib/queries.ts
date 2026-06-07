@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/database.types";
 import type { Product, Order, Settings } from "@/lib/types";
 import { formatBogota, bogotaTodayStartISO } from "@/lib/time";
+import { DEFAULT_MESSAGES, type StoreMessages } from "@/lib/messages";
 
 type DbProduct = Database["public"]["Tables"]["products"]["Row"];
 type DbOrder = Database["public"]["Tables"]["orders"]["Row"];
@@ -34,6 +35,7 @@ export function dbProductToProduct(row: DbProduct): Product {
 export function dbSettingsToSettings(row: DbSettings): Settings & {
   shippingCost: number;
   freeShippingMin: number;
+  messages: StoreMessages;
 } {
   return {
     storeName: row.store_name,
@@ -41,6 +43,18 @@ export function dbSettingsToSettings(row: DbSettings): Settings & {
     shippingInfo: row.shipping_info,
     shippingCost: row.shipping_cost,
     freeShippingMin: row.free_shipping_min,
+    // Mensajes editables. Si una columna viniera nula (no debería: tienen
+    // DEFAULT not-null), cae al texto histórico para no mostrar vacío.
+    messages: {
+      postCompra: row.msg_post_compra ?? DEFAULT_MESSAGES.postCompra,
+      popupTitulo: row.msg_popup_titulo ?? DEFAULT_MESSAGES.popupTitulo,
+      marca: row.msg_marca ?? DEFAULT_MESSAGES.marca,
+      envioContraentrega:
+        row.msg_envio_contraentrega ?? DEFAULT_MESSAGES.envioContraentrega,
+      emailPagoValidado:
+        row.email_pago_validado ?? DEFAULT_MESSAGES.emailPagoValidado,
+      emailEnviado: row.email_enviado ?? DEFAULT_MESSAGES.emailEnviado,
+    },
   };
 }
 
@@ -183,6 +197,7 @@ export async function getStoreSettings() {
       shippingInfo: "",
       shippingCost: 12000,
       freeShippingMin: 200000,
+      messages: DEFAULT_MESSAGES,
     };
   }
   return dbSettingsToSettings(data);
