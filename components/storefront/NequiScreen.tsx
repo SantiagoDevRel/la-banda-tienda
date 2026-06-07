@@ -18,11 +18,8 @@ import { useCart } from "@/lib/cart";
 import { saveLastOrder } from "@/lib/lastOrder";
 import { createOrder } from "@/lib/actions/orders";
 import { compressImage } from "@/lib/imageCompress";
-import {
-  readCheckout,
-  clearCheckout,
-  isCheckoutComplete,
-} from "@/lib/checkoutStore";
+import { isCheckoutComplete } from "@/lib/checkoutStore";
+import { useCheckout } from "@/lib/checkout-context";
 import type { PaymentMethod } from "@/lib/queries";
 
 const STEPS = [
@@ -63,22 +60,11 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
   const [artworkPreview, setArtworkPreview] = useState<string | null>(null);
   const [artworkName, setArtworkName] = useState("");
   const artworkRef = useRef<HTMLInputElement>(null);
-  const [checkout, setCheckout] = useState<{
-    name: string;
-    email: string;
-    phone: string;
-    addr: string;
-    city: string;
-    department: string;
-    deliveryMethod: "shipping" | "pickup";
-  } | null>(null);
 
-  // Read the checkout data — the delivery method drives the displayed total.
-  // Viene de localStorage (sobrevive a que el cliente salga a la app del banco
-  // y vuelva). Si no hay datos, `checkout` queda null y confirmOrder lo ataja.
-  useEffect(() => {
-    setCheckout(readCheckout());
-  }, []);
+  // Datos del cliente desde el contexto (memoria + localStorage). Sobreviven la
+  // navegación SPA y el reload/eviction del celular. Si faltan, confirmOrder lo
+  // ataja y manda a recargarlos. El delivery method maneja el total mostrado.
+  const { data: checkout, clear: clearCheckoutData } = useCheckout();
 
   const isPickup = checkout?.deliveryMethod === "pickup";
   const effectiveTotal = isPickup ? subtotal : total;
@@ -226,7 +212,7 @@ export function NequiScreen({ paymentMethods }: NequiScreenProps) {
       deliveryMethod: c.deliveryMethod,
     });
 
-    clearCheckout();
+    clearCheckoutData();
     clear();
     router.push("/pedido/confirmado");
   }

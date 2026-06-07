@@ -15,7 +15,7 @@ import { Combobox } from "@/components/storefront/Combobox";
 import { formatCOP } from "@/lib/data";
 import { useCart } from "@/lib/cart";
 import { DEPARTAMENTOS, ciudadesDe } from "@/lib/colombia";
-import { saveCheckout, readCheckout } from "@/lib/checkoutStore";
+import { useCheckout } from "@/lib/checkout-context";
 
 type DeliveryMethod = "shipping" | "pickup";
 
@@ -44,6 +44,7 @@ const EMPTY: FormState = {
 
 export default function CheckoutPage() {
   const { items, subtotal, ready, hasUnavailable } = useCart();
+  const { data: savedCheckout, setData: saveCheckout } = useCheckout();
   const router = useRouter();
   const [form, setForm] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
@@ -65,11 +66,10 @@ export default function CheckoutPage() {
       router.replace("/carrito");
   }, [ready, items.length, hasUnavailable, router]);
 
-  // Prefill if the customer already started checkout.
+  // Prefill if the customer already started checkout (contexto + storage).
   useEffect(() => {
-    const saved = readCheckout();
-    if (saved) setForm({ ...EMPTY, ...saved });
-  }, []);
+    if (savedCheckout) setForm({ ...EMPTY, ...savedCheckout });
+  }, [savedCheckout]);
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));

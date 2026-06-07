@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { VideoBackground } from "@/components/VideoBackground";
 import { CartProvider } from "@/lib/cart";
+import { CheckoutProvider } from "@/lib/checkout-context";
 import { getActiveProducts, getStoreSettings } from "@/lib/queries";
 
 // Storefront shell: fetches products + settings server-side so the cart
@@ -17,10 +18,12 @@ export default async function StoreLayout({ children }: { children: ReactNode })
       shippingCost={settings.shippingCost}
       freeShippingMin={settings.freeShippingMin}
     >
-      <div className="store-shell">
-        <VideoBackground />
-        <div className="store-column">{children}</div>
-      </div>
+      <CheckoutProvider>
+        <div className="store-shell">
+          <VideoBackground />
+          <div className="store-column">{children}</div>
+        </div>
+      </CheckoutProvider>
     </CartProvider>
   );
 }
