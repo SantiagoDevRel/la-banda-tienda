@@ -35,7 +35,13 @@ async function uploadImageFile(
   const path = `${crypto.randomUUID()}.${ext}`;
   const { error: uploadErr } = await supabase.storage
     .from("product-images")
-    .upload(path, file, { contentType: file.type, upsert: false });
+    .upload(path, file, {
+      contentType: file.type,
+      upsert: false,
+      // 1 año: las fotos de producto no cambian (cada subida usa un UUID nuevo),
+      // así el browser del cliente que vuelve NO re-descarga → menos egress.
+      cacheControl: "31536000",
+    });
 
   if (uploadErr) {
     console.error("[uploadImageFile]", uploadErr.message);
