@@ -66,6 +66,17 @@ spam de correos de error. Reglas que quedaron:
   (salvo mientras envía) y `confirmOrder` muestra el mensaje exacto de lo que
   falta (pantallazo / diseño del bombo / stock / datos perdidos).
 
+### Mensajes editables desde Ajustes
+Los textos de cara al cliente son editables en `admin/ajustes` (sección
+"Mensajes de la tienda"), persistidos en columnas de `store_settings`
+(`msg_post_compra`, `msg_popup_titulo`, `msg_marca`, `msg_envio_contraentrega`,
+`email_pago_validado`, `email_enviado`). Fuente única de defaults +
+`renderTemplate` en `lib/messages.ts` — si la lectura falla, cae al texto
+histórico. Los emails usan placeholders: `{pedido} {total}` (pago validado),
+`{nombre} {pedido} {whatsapp}` (enviado). Para agregar otro mensaje editable:
+columna nueva en store_settings (default = texto actual) → `lib/messages.ts` →
+`dbSettingsToSettings` → `SettingsForm` → consumirlo en el componente.
+
 ### Riesgo de límites a vigilar
 - **Vercel bandwidth (lo más crítico)**: `public/video/bg-*.mp4` son 9 clips
   (~40 MB total) servidos desde `/public`. `VideoBackground` auto-avanza al
