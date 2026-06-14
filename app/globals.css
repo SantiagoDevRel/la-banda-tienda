@@ -425,14 +425,6 @@ a {
     opacity: 1;
   }
 }
-.store-bg__video {
-  z-index: 2;
-  opacity: 0;
-  transition: opacity 0.9s ease;
-}
-.store-bg__video.is-visible {
-  opacity: 1;
-}
 .store-bg__overlay {
   position: absolute;
   inset: 0;
@@ -625,17 +617,13 @@ a {
   backdrop-filter: blur(2px);
 }
 
-/* Reduced motion: never autoplay the backdrop video; no crossfade either */
+/* Reduced motion: sin crossfade del fondo */
 @media (prefers-reduced-motion: reduce) {
-  .store-bg__video {
-    display: none;
-  }
   .store-bg__frame {
     animation: none;
     opacity: 1;
   }
-  .lds-btn,
-  .store-bg__video {
+  .lds-btn {
     transition: none;
   }
 }
