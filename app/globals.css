@@ -412,8 +412,21 @@ a {
 .store-bg__poster {
   z-index: 0;
 }
-.store-bg__video {
+/* Frame actual: entra con un fade suave sobre el frame anterior. */
+.store-bg__frame {
   z-index: 1;
+  animation: store-bg-fade 1.4s ease forwards;
+}
+@keyframes store-bg-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.store-bg__video {
+  z-index: 2;
   opacity: 0;
   transition: opacity 0.9s ease;
 }
@@ -423,7 +436,7 @@ a {
 .store-bg__overlay {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 3;
   background: linear-gradient(
     180deg,
     rgba(8, 12, 9, 0.4) 0%,
@@ -612,10 +625,14 @@ a {
   backdrop-filter: blur(2px);
 }
 
-/* Reduced motion: never autoplay the backdrop video */
+/* Reduced motion: never autoplay the backdrop video; no crossfade either */
 @media (prefers-reduced-motion: reduce) {
   .store-bg__video {
     display: none;
+  }
+  .store-bg__frame {
+    animation: none;
+    opacity: 1;
   }
   .lds-btn,
   .store-bg__video {

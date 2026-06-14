@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
         // cambia un clip, renombralo bg-10.mp4 etc. para romper la caché.)
         source: "/video/:path*",
         headers: [
-          { key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" },
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
       },
     ];
